@@ -1,9 +1,11 @@
 //! Types that facilitate transport between the FEM firmware and MnC software
+#![no_std]
+
 use serde::{Deserialize, Serialize};
 
 /// Actions that can be performed
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
-enum Action {
+pub enum Action {
     /// Set the IF1 "Good" power threshold in dBm
     SetIf1Level(f32),
     /// Set the IF2 "Good" power threshold in dBm
@@ -16,22 +18,22 @@ enum Action {
 }
 
 /// Monitor data sent in response to a [`Command::Monitor`] call
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
-struct Payload {
+#[derive(Serialize, Deserialize, Debug, PartialEq, Default)]
+pub struct MonitorPayload {
     /// IF1 power in dBm
-    if1_power: f32,
+    pub if1_power: f32,
     /// IF2 power in dBm
-    if2_power: f32,
+    pub if2_power: f32,
     /// PCB surface temperature in C
-    surface_temp: f32,
+    pub surface_temp: f32,
     /// RP2040 internal temperature in C
-    ic_temp: f32,
+    pub ic_temp: f32,
     // TODO voltages and currents
 }
 
 /// Payloads from MnC software to the FEM
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
-enum Command {
+pub enum Command {
     Monitor,
     Control(Action),
 }

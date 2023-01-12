@@ -3,6 +3,7 @@
 
 mod bsp;
 mod log_det;
+mod mnc;
 
 use bsp::*;
 use defmt::*;
@@ -11,9 +12,10 @@ use embedded_hal::digital::v2::{OutputPin, ToggleableOutputPin};
 use hal::pac;
 use hal::{
     adc::{Adc, TempSense},
-    gpio::{bank0::Gpio21, Output, Pin, PushPull},
-    uart::{DataBits, StopBits, UartConfig, UartPeripheral},
+    gpio::{Output, Pin, PushPull},
+    uart::{UartConfig, UartPeripheral},
 };
+use heapless::Vec;
 use panic_probe as _;
 use rp2040_hal as hal;
 use rp2040_hal::clocks::Clock;
@@ -37,6 +39,8 @@ mod app {
         rf2_if_pow: Rf2IfPow,
         temp_sense: TempSense,
         uart: bsp::Uart,
+        monitor_payload: transport::MonitorPayload,
+        adc: Adc,
     }
 
     #[monotonic(binds = TIMER_IRQ_0, default = true)]
@@ -122,6 +126,7 @@ mod app {
         (
             Shared {},
             Local {
+                monitor_payload: Default::default(),
                 lna_1,
                 lna_2,
                 rf1_status_led,
@@ -130,14 +135,23 @@ mod app {
                 rf2_if_pow,
                 temp_sense,
                 uart,
+                adc,
             },
             init::Monotonics(mono),
         )
     }
 
-    #[task(binds = UART1_IRQ, local = [uart])]
+    // Only one task - we're just going to react to requests for either monitor data or control
+    #[task(binds = UART1_IRQ, local = [uart, temp_sense, rf1_if_pow, rf2_if_pow, monitor_payload, adc])]
     fn on_rx(cx: on_rx::Context) {
+        // Grab all the locals
         let uart = cx.local.uart;
+        let temp_sense = cx.local.temp_sense;
+        let rf1_if_pow = cx.local.rf1_if_pow;
+        let rf2_if_pow = cx.local.rf2_if_pow;
+        let monitor_payload = cx.local.monitor_payload;
+        let adc = cx.local.adc;
+
         // Unsure yet how big this payload will be
         let mut buf = [0u8; 128];
         let bytes_read;
@@ -156,9 +170,41 @@ mod app {
         } else {
             return;
         }
-        // And echo back
-        if uart.uart_is_writable() {
-            uart.write_full_blocking(&buf[0..bytes_read + 1]);
+        // Deserialize command
+        let command: transport::Command = match postcard::from_bytes(&buf[..bytes_read]) {
+            Ok(t) => t,
+            Err(e) => {
+                error!("Error deserializing incoming command payload");
+                return;
+            }
+        };
+        // Dispatch command
+        match command {
+            transport::Command::Monitor => {
+                // Update monitor payload and send
+                mnc::update_monitor_payload(
+                    monitor_payload,
+                    adc,
+                    rf1_if_pow,
+                    rf2_if_pow,
+                    temp_sense,
+                );
+                let bytes: Vec<u8, 32> = match postcard::to_vec(&monitor_payload) {
+                    Ok(v) => v,
+                    Err(_) => {
+                        error!("Error packing monitor payload");
+                        return;
+                    }
+                };
+                if uart.uart_is_writable() {
+                    uart.write_full_blocking(&bytes);
+                } else {
+                    error!("Couldn't write to UART")
+                }
+            }
+            transport::Command::Control(_) => {
+                // TODO
+            }
         }
     }
 }

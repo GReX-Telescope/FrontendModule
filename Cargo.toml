@@ -1,5 +1,5 @@
 [workspace]
-members = ["firmware",  "gui", "transport"]
+members = ["firmware", "transport", "cli"]
 
 # Profiles mostly intended for firmware - but won't hurt the GUI app
 
