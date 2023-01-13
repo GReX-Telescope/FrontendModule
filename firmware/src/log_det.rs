@@ -9,6 +9,6 @@ where
 {
     // Get the ADC value and convert to true voltage
     let vx = read_adc(adc, pin)? * ADC_REF_VOLT;
-    // And apply slope and intercept
-    Ok(vx / 0.0215 - 47.0)
+    // And apply slope and intercept and account for the 20 dB tap
+    Ok(vx / 0.0215 - 47.0 + 20.0)
 }

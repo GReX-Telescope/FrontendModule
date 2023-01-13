@@ -18,6 +18,8 @@ rp2040-monotonic = "1"
 rp2040-hal = { version="0.7", features=["rt"] }
 rp2040-boot2 = "0.2"
 postcard = { version = "1", features = ["defmt"] }
-shared-bus = "0.2"
+shared-bus ={ version =  "0.2", features = ["cortex-m"] }
 transport = { path = "../transport" }
 heapless = "0.7"
+fugit = { version = "0.3", features = ["defmt"] }
+ina3221 = { git = "https://github.com/kiranshila/INA3221", version = "0.1.0" }

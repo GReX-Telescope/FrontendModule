@@ -4,22 +4,31 @@
 mod bsp;
 mod log_det;
 mod mnc;
+mod tmp100;
+
+use core::cell::RefCell;
 
 use bsp::*;
+use cortex_m::interrupt::Mutex;
 use defmt::*;
 use defmt_rtt as _;
-use embedded_hal::digital::v2::{OutputPin, ToggleableOutputPin};
+use embedded_hal::digital::v2::OutputPin;
+use fugit::RateExtU32;
 use hal::pac;
 use hal::{
     adc::{Adc, TempSense},
-    gpio::{Output, Pin, PushPull},
+    i2c::I2C,
     uart::{UartConfig, UartPeripheral},
 };
 use heapless::Vec;
 use panic_probe as _;
 use rp2040_hal as hal;
 use rp2040_hal::clocks::Clock;
-use rp2040_monotonic::{ExtU64, Rp2040Monotonic};
+use rp2040_monotonic::Rp2040Monotonic;
+use shared_bus::I2cProxy;
+
+// Boy this is a thicc type
+type I2cBus = I2cProxy<'static, Mutex<RefCell<bsp::I2c>>>;
 
 // Bind software tasks to SIO_IRQ_PROC0, we're not using it
 #[rtic::app(device = pac, peripherals = true, dispatchers = [SIO_IRQ_PROC0])]
@@ -27,7 +36,12 @@ mod app {
     use super::*;
 
     #[shared]
-    struct Shared {}
+    struct Shared {
+        rf1_if_pow: Rf1IfPow,
+        rf2_if_pow: Rf2IfPow,
+        adc: Adc,
+        state: mnc::State,
+    }
 
     #[local]
     struct Local {
@@ -35,23 +49,15 @@ mod app {
         rf2_status_led: Rf2StatusLed,
         lna_1: Rf1LnaEn,
         lna_2: Rf2LnaEn,
-        rf1_if_pow: Rf1IfPow,
-        rf2_if_pow: Rf2IfPow,
         temp_sense: TempSense,
         uart: bsp::Uart,
         monitor_payload: transport::MonitorPayload,
-        adc: Adc,
+        tmp100: tmp100::TMP100<I2cBus>,
+        ina3221: ina3221::INA3221<I2cBus>,
     }
 
     #[monotonic(binds = TIMER_IRQ_0, default = true)]
     type Tonic = Rp2040Monotonic;
-
-    #[idle]
-    fn idle(_: idle::Context) -> ! {
-        loop {
-            cortex_m::asm::wfi();
-        }
-    }
 
     #[init]
     fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
@@ -96,14 +102,11 @@ mod app {
         // Enable the ADC peripheral and internal temperature sensor
         let mut adc = Adc::new(cx.device.ADC, &mut resets);
         let temp_sense = adc.enable_temp_sensor();
-        let rf1_if_pow = pins.rf1_if_pow.into_floating_input();
-        let rf2_if_pow = pins.rf2_if_pow.into_floating_input();
+        let rf1_if_pow: Rf1IfPow = pins.rf1_if_pow.into_mode();
+        let rf2_if_pow: Rf2IfPow = pins.rf2_if_pow.into_mode();
 
         // Grab the UART pins and setup the peripheral (115200 baud)
-        let uart_pins = (
-            pins.txd.into_mode::<hal::gpio::FunctionUart>(),
-            pins.rxd.into_mode::<hal::gpio::FunctionUart>(),
-        );
+        let uart_pins: (Txd, Rxd) = (pins.txd.into_mode(), pins.rxd.into_mode());
         let mut uart = UartPeripheral::new(cx.device.UART1, uart_pins, &mut resets)
             .enable(UartConfig::default(), clocks.peripheral_clock.freq())
             .unwrap();
@@ -112,45 +115,111 @@ mod app {
         uart.enable_rx_interrupt();
 
         // Set the LNA outputs to ON by default
-        let mut lna_1 = pins.rf1_lna_en.into_push_pull_output();
-        let mut lna_2 = pins.rf2_lna_en.into_push_pull_output();
+        let mut lna_1: Rf1LnaEn = pins.rf1_lna_en.into_mode();
+        let mut lna_2: Rf2LnaEn = pins.rf2_lna_en.into_mode();
         lna_1.set_high().unwrap();
         lna_2.set_high().unwrap();
 
         // Set the RF status LEDs to off
-        let mut rf1_status_led = pins.rf1_status_led.into_push_pull_output();
-        let mut rf2_status_led = pins.rf2_status_led.into_push_pull_output();
+        let mut rf1_status_led: Rf1StatusLed = pins.rf1_status_led.into_mode();
+        let mut rf2_status_led: Rf2StatusLed = pins.rf2_status_led.into_mode();
         rf1_status_led.set_low().unwrap();
         rf2_status_led.set_low().unwrap();
 
+        // Setup I2C for the TMP100 and INA3221
+        let sda: Sda = pins.sda.into_mode();
+        let scl: Scl = pins.scl.into_mode();
+        let i2c = I2C::i2c0(
+            cx.device.I2C0,
+            sda,
+            scl,
+            400.kHz(),
+            &mut resets,
+            &clocks.system_clock,
+        );
+        let i2c_bus = shared_bus::new_cortexm!(I2c = i2c).unwrap();
+
+        // Initialize the TMP100
+        let mut tmp100 = tmp100::TMP100::new(i2c_bus.acquire_i2c(), 0b1001000);
+        tmp100.init().unwrap();
+
+        // Setup the INA3221
+        let mut ina3221 = ina3221::INA3221::new(i2c_bus.acquire_i2c(), ina3221::AddressPin::Gnd);
+        match ina3221.reset() {
+            Ok(_) => (),
+            Err(_) => error!("INA3221 failed to reset"),
+        };
+        match ina3221.set_averaging(ina3221::registers::Averages::_256) {
+            Ok(_) => (),
+            Err(_) => error!("INA3221 failed to set averages"),
+        };
+
+        info!("Booted!");
+
         (
-            Shared {},
+            Shared {
+                rf1_if_pow,
+                rf2_if_pow,
+                adc,
+                state: Default::default(),
+            },
             Local {
                 monitor_payload: Default::default(),
                 lna_1,
                 lna_2,
                 rf1_status_led,
                 rf2_status_led,
-                rf1_if_pow,
-                rf2_if_pow,
                 temp_sense,
                 uart,
-                adc,
+                tmp100,
+                ina3221,
             },
             init::Monotonics(mono),
         )
     }
 
+    // Idle task just updates the IF Good LEDs
+    #[idle(local = [rf1_status_led, rf2_status_led], shared = [rf1_if_pow, rf2_if_pow, adc, state])]
+    fn idle(cx: idle::Context) -> ! {
+        // Locals
+        let rf1 = cx.local.rf1_status_led;
+        let rf2 = cx.local.rf2_status_led;
+        // Shared
+        let mut rf1_if_pow = cx.shared.rf1_if_pow;
+        let mut rf2_if_pow = cx.shared.rf2_if_pow;
+        let mut adc = cx.shared.adc;
+        let mut state = cx.shared.state;
+        loop {
+            (&mut rf1_if_pow, &mut rf2_if_pow, &mut adc, &mut state).lock(
+                |rf1_if_pow, rf2_if_pow, adc, state| {
+                    if read_adc(adc, rf1_if_pow).unwrap() >= state.if_good_threshold {
+                        rf1.set_high().unwrap();
+                    } else {
+                        rf1.set_low().unwrap();
+                    }
+                    if read_adc(adc, rf2_if_pow).unwrap() >= state.if_good_threshold {
+                        rf2.set_high().unwrap();
+                    } else {
+                        rf2.set_low().unwrap();
+                    }
+                },
+            )
+        }
+    }
+
     // Only one task - we're just going to react to requests for either monitor data or control
-    #[task(binds = UART1_IRQ, local = [uart, temp_sense, rf1_if_pow, rf2_if_pow, monitor_payload, adc])]
+    #[task(binds = UART1_IRQ, local = [uart, temp_sense, monitor_payload, tmp100, ina3221], shared = [rf1_if_pow, rf2_if_pow, adc])]
     fn on_rx(cx: on_rx::Context) {
         // Grab all the locals
         let uart = cx.local.uart;
         let temp_sense = cx.local.temp_sense;
-        let rf1_if_pow = cx.local.rf1_if_pow;
-        let rf2_if_pow = cx.local.rf2_if_pow;
+        let tmp100 = cx.local.tmp100;
         let monitor_payload = cx.local.monitor_payload;
-        let adc = cx.local.adc;
+        let ina3221 = cx.local.ina3221;
+        // And shared
+        let rf1_if_pow = cx.shared.rf1_if_pow;
+        let rf2_if_pow = cx.shared.rf2_if_pow;
+        let adc = cx.shared.adc;
 
         // Unsure yet how big this payload will be
         let mut buf = [0u8; 128];
@@ -173,7 +242,7 @@ mod app {
         // Deserialize command
         let command: transport::Command = match postcard::from_bytes(&buf[..bytes_read]) {
             Ok(t) => t,
-            Err(e) => {
+            Err(_) => {
                 error!("Error deserializing incoming command payload");
                 return;
             }
@@ -181,15 +250,20 @@ mod app {
         // Dispatch command
         match command {
             transport::Command::Monitor => {
+                info!("Request for monitor payload - sending");
                 // Update monitor payload and send
-                mnc::update_monitor_payload(
-                    monitor_payload,
-                    adc,
-                    rf1_if_pow,
-                    rf2_if_pow,
-                    temp_sense,
-                );
-                let bytes: Vec<u8, 32> = match postcard::to_vec(&monitor_payload) {
+                (adc, rf1_if_pow, rf2_if_pow).lock(|adc, rf1_if_pow, rf2_if_pow| {
+                    mnc::update_monitor_payload(
+                        monitor_payload,
+                        adc,
+                        rf1_if_pow,
+                        rf2_if_pow,
+                        temp_sense,
+                        tmp100,
+                        ina3221,
+                    );
+                });
+                let bytes: Vec<u8, 64> = match postcard::to_vec(&monitor_payload) {
                     Ok(v) => v,
                     Err(_) => {
                         error!("Error packing monitor payload");

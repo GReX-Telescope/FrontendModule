@@ -1,5 +1,9 @@
 use embedded_hal::adc::{Channel, OneShot};
-use hal::Adc;
+use hal::{
+    i2c::I2C,
+    pac::{I2C0, UART1},
+    Adc,
+};
 use rp2040_hal as hal;
 
 // Crystal freq
@@ -47,10 +51,19 @@ hal::bsp_pins! {
         name: rxd,
         aliases: {FunctionUart: Rxd}
     }
+    Gpio24 {
+        name: sda,
+        aliases: {FunctionI2C: Sda}
+    }
+    Gpio25 {
+        name: scl,
+        aliases: {FunctionI2C: Scl}
+    }
 }
 
 // Some more type aliases
-pub type Uart = hal::uart::UartPeripheral<hal::uart::Enabled, crate::pac::UART1, (Txd, Rxd)>;
+pub type Uart = hal::uart::UartPeripheral<hal::uart::Enabled, UART1, (Txd, Rxd)>;
+pub type I2c = I2C<I2C0, (Sda, Scl)>;
 
 /// Get the 0..1 scaled floating point number representing the 12 bit ADC value
 pub fn read_adc<PIN>(adc: &mut Adc, pin: &mut PIN) -> Result<f32, ()>

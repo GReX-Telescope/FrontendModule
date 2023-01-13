@@ -51,7 +51,7 @@ fn main() {
     let cli = Cli::parse();
     // Try to open the serial port
     let port = serialport::new(cli.port, FEM_BAUD)
-        .timeout(Duration::from_millis(10))
+        .timeout(Duration::from_millis(100))
         .open()
         .expect("Failed to open serial port");
     // Dispath on action
