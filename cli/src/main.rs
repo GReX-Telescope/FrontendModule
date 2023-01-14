@@ -34,7 +34,7 @@ enum Setting {
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
-enum LNA {
+enum Lna {
     Ch1,
     Ch2,
 }
@@ -51,9 +51,9 @@ impl Setting {
 #[derive(Subcommand)]
 enum LnaCommand {
     /// Sets the power state of a given LNA
-    Power { channel: LNA, setting: Setting },
+    Power { channel: Lna, setting: Setting },
     /// Sets the calibration state of a given LNA
-    Cal { channel: LNA, setting: Setting },
+    Cal { channel: Lna, setting: Setting },
 }
 
 fn monitor(mut port: Box<dyn SerialPort>) {
@@ -78,11 +78,11 @@ fn monitor(mut port: Box<dyn SerialPort>) {
     }
 }
 
-fn lna_power(mut port: Box<dyn SerialPort>, channel: LNA, setting: Setting) {
+fn lna_power(mut port: Box<dyn SerialPort>, channel: Lna, setting: Setting) {
     let com: Vec<u8, 8> = to_vec(
         &(match channel {
-            LNA::Ch1 => transport::Command::Control(transport::Action::Lna1Power(setting.en())),
-            LNA::Ch2 => transport::Command::Control(transport::Action::Lna2Power(setting.en())),
+            Lna::Ch1 => transport::Command::Control(transport::Action::Lna1Power(setting.en())),
+            Lna::Ch2 => transport::Command::Control(transport::Action::Lna2Power(setting.en())),
         }),
     )
     .unwrap();
@@ -90,11 +90,11 @@ fn lna_power(mut port: Box<dyn SerialPort>, channel: LNA, setting: Setting) {
     port.write_all(&com).expect("Serial write failed");
 }
 
-fn lna_cal(mut port: Box<dyn SerialPort>, channel: LNA, setting: Setting) {
+fn lna_cal(mut port: Box<dyn SerialPort>, channel: Lna, setting: Setting) {
     let com: Vec<u8, 8> = to_vec(
         &(match channel {
-            LNA::Ch1 => transport::Command::Control(transport::Action::SetCal1(setting.en())),
-            LNA::Ch2 => transport::Command::Control(transport::Action::SetCal2(setting.en())),
+            Lna::Ch1 => transport::Command::Control(transport::Action::SetCal1(setting.en())),
+            Lna::Ch2 => transport::Command::Control(transport::Action::SetCal2(setting.en())),
         }),
     )
     .unwrap();
