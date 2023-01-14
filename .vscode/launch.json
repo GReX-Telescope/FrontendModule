@@ -7,7 +7,6 @@
             "executable": "./target/thumbv6m-none-eabi/debug/firmware",
             "request": "launch",
             "type": "cortex-debug",
-            "runToEntryPoint": "main",
             "servertype": "jlink",
             "serverpath": "C:/Program Files/SEGGER/JLink/JLinkGDBServerCL.exe",
             //"serverpath": "/usr/bin/JLinkGDBServerCLExe",

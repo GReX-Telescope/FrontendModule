@@ -1,29 +1,30 @@
 #![no_std]
 #![no_main]
 
+mod atten;
 mod bsp;
 mod log_det;
 mod mnc;
 mod tmp100;
 
-use core::cell::RefCell;
-
 use bsp::*;
+use core::cell::RefCell;
 use cortex_m::interrupt::Mutex;
 use defmt::*;
 use defmt_rtt as _;
-use embedded_hal::digital::v2::OutputPin;
+use embedded_hal::{digital::v2::OutputPin, PwmPin};
 use fugit::RateExtU32;
-use hal::pac;
 use hal::{
     adc::{Adc, TempSense},
+    clocks::Clock,
     i2c::I2C,
+    pac,
+    pwm::Slices,
     uart::{UartConfig, UartPeripheral},
 };
 use heapless::Vec;
 use panic_probe as _;
 use rp2040_hal as hal;
-use rp2040_hal::clocks::Clock;
 use rp2040_monotonic::Rp2040Monotonic;
 use shared_bus::I2cProxy;
 
@@ -54,6 +55,9 @@ mod app {
         monitor_payload: transport::MonitorPayload,
         tmp100: tmp100::TMP100<I2cBus>,
         ina3221: ina3221::INA3221<I2cBus>,
+        atten: atten::DualHMC624A<Att1Le, Att2Le, Spi>,
+        rf1_cal: Rf1CalPwm,
+        rf2_cal: Rf2CalPwm,
     }
 
     #[monotonic(binds = TIMER_IRQ_0, default = true)]
@@ -154,6 +158,53 @@ mod app {
             Err(_) => error!("INA3221 failed to set averages"),
         };
 
+        // Setup the SPI pins and initial state of the latch enable pins (high)
+        // pins are implicitly used by the SPI driver
+        let _clk: Clk = pins.clk.into_mode();
+        let _mosi: Mosi = pins.mosi.into_mode();
+        let mut atten1_le: Att1Le = pins.atten1_le.into_mode();
+        atten1_le.set_high().unwrap();
+        let mut atten2_le: Att2Le = pins.atten2_le.into_mode();
+        atten2_le.set_high().unwrap();
+
+        let spi = hal::Spi::<_, _, 6>::new(cx.device.SPI0);
+        let spi: Spi = spi.init(
+            &mut resets,
+            clocks.peripheral_clock.freq(),
+            1.MHz(),
+            &embedded_hal::spi::MODE_0,
+        );
+
+        // And setup the two attenuators
+        let mut atten = atten::DualHMC624A::new(spi, atten1_le, atten2_le);
+        // and set the initial state to 0
+        atten.set_attenuation(0.0).unwrap();
+
+        // Setup the PWMs for the calibration output
+        let pwm_slices = Slices::new(cx.device.PWM, &mut resets);
+        let mut pwm = pwm_slices.pwm1;
+
+        // Configure PWM frequency to close to 32 kHz
+        pwm.set_div_int(1);
+        pwm.set_div_frac(15);
+        pwm.set_top(1024);
+        pwm.set_ph_correct();
+
+        // Attach PWM pins to outputs
+        let mut rf1_cal = pwm.channel_b;
+        let _channel_pin_1 = rf1_cal.output_to(pins.rf1_cal);
+
+        let mut rf2_cal = pwm.channel_a;
+        let _channel_pin_2 = rf2_cal.output_to(pins.rf2_cal);
+
+        // Set the duty cycle to 50%
+        rf1_cal.set_duty(512);
+        rf2_cal.set_duty(512);
+
+        // And boot disabled
+        rf1_cal.disable();
+        rf2_cal.disable();
+
         info!("Booted!");
 
         (
@@ -173,6 +224,9 @@ mod app {
                 uart,
                 tmp100,
                 ina3221,
+                atten,
+                rf1_cal,
+                rf2_cal,
             },
             init::Monotonics(mono),
         )
@@ -208,7 +262,7 @@ mod app {
     }
 
     // Only one task - we're just going to react to requests for either monitor data or control
-    #[task(binds = UART1_IRQ, local = [uart, temp_sense, monitor_payload, tmp100, ina3221], shared = [rf1_if_pow, rf2_if_pow, adc])]
+    #[task(binds = UART1_IRQ, local = [uart, temp_sense, monitor_payload, tmp100, ina3221, lna_1, lna_2, atten, rf1_cal, rf2_cal], shared = [rf1_if_pow, rf2_if_pow, adc, state])]
     fn on_rx(cx: on_rx::Context) {
         // Grab all the locals
         let uart = cx.local.uart;
@@ -216,13 +270,19 @@ mod app {
         let tmp100 = cx.local.tmp100;
         let monitor_payload = cx.local.monitor_payload;
         let ina3221 = cx.local.ina3221;
+        let lna1 = cx.local.lna_1;
+        let lna2 = cx.local.lna_2;
+        let atten = cx.local.atten;
+        let rf1_cal = cx.local.rf1_cal;
+        let rf2_cal = cx.local.rf2_cal;
         // And shared
         let rf1_if_pow = cx.shared.rf1_if_pow;
         let rf2_if_pow = cx.shared.rf2_if_pow;
         let adc = cx.shared.adc;
+        let mut state = cx.shared.state;
 
         // Unsure yet how big this payload will be
-        let mut buf = [0u8; 128];
+        let mut buf = [0u8; 8];
         let bytes_read;
         // Check to make sure the UART is readable
         if uart.uart_is_readable() {
@@ -263,7 +323,7 @@ mod app {
                         ina3221,
                     );
                 });
-                let bytes: Vec<u8, 64> = match postcard::to_vec(&monitor_payload) {
+                let bytes: Vec<u8, 40> = match postcard::to_vec(&monitor_payload) {
                     Ok(v) => v,
                     Err(_) => {
                         error!("Error packing monitor payload");
@@ -276,9 +336,41 @@ mod app {
                     error!("Couldn't write to UART")
                 }
             }
-            transport::Command::Control(_) => {
-                // TODO
-            }
+            transport::Command::Control(a) => match a {
+                transport::Action::SetIfLevel(level) => state.lock(|s| s.if_good_threshold = level),
+                transport::Action::Lna1Power(en) => {
+                    if en {
+                        lna1.set_high().unwrap();
+                    } else {
+                        lna1.set_low().unwrap();
+                    }
+                }
+                transport::Action::Lna2Power(en) => {
+                    if en {
+                        lna2.set_high().unwrap();
+                    } else {
+                        lna2.set_low().unwrap();
+                    }
+                }
+                transport::Action::SetAtten(a) => match atten.set_attenuation(a) {
+                    Ok(_) => (),
+                    Err(_) => error!("Failed to set attenuation"),
+                },
+                transport::Action::SetCal1(en) => {
+                    if en {
+                        rf1_cal.enable();
+                    } else {
+                        rf1_cal.disable();
+                    }
+                }
+                transport::Action::SetCal2(en) => {
+                    if en {
+                        rf2_cal.enable();
+                    } else {
+                        rf2_cal.disable();
+                    }
+                }
+            },
         }
     }
 }

@@ -12,7 +12,12 @@ pub enum Action {
     Lna1Power(bool),
     /// Control the power state of the LNA2 regulator
     Lna2Power(bool),
-    // TODO attenuation control
+    // Set attenuation
+    SetAtten(f32),
+    // Enable/Disable calibration tone for LNA1
+    SetCal1(bool),
+    // Enable/Disable calibration tone for LNA2
+    SetCal2(bool),
 }
 
 /// Monitor data sent in response to a [`Command::Monitor`] call
