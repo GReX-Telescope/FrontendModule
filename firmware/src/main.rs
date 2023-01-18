@@ -163,9 +163,9 @@ mod app {
         let _clk: Clk = pins.clk.into_mode();
         let _mosi: Mosi = pins.mosi.into_mode();
         let mut atten1_le: Att1Le = pins.atten1_le.into_mode();
-        atten1_le.set_high().unwrap();
+        atten1_le.set_low().unwrap();
         let mut atten2_le: Att2Le = pins.atten2_le.into_mode();
-        atten2_le.set_high().unwrap();
+        atten2_le.set_low().unwrap();
 
         let spi = hal::Spi::<_, _, 6>::new(cx.device.SPI0);
         let spi: Spi = spi.init(
@@ -176,9 +176,9 @@ mod app {
         );
 
         // And setup the two attenuators
-        let mut atten = atten::DualHMC624A::new(spi, atten1_le, atten2_le);
+        let atten = atten::DualHMC624A::new(spi, atten1_le, atten2_le);
         // and set the initial state to 0
-        atten.set_attenuation(0.0).unwrap();
+        // atten.set_attenuation(0.0).unwrap();
 
         // Setup the PWMs for the calibration output
         let pwm_slices = Slices::new(cx.device.PWM, &mut resets);
