@@ -1,6 +1,8 @@
 //! Logic for the HMC624A attenuator
 
-use embedded_hal::{digital::v2::OutputPin, spi::FullDuplex};
+use cortex_m::asm::delay;
+use embedded_hal::blocking::spi::Write;
+use embedded_hal::digital::v2::OutputPin;
 use micromath::F32Ext;
 
 #[derive(Debug)]
@@ -18,7 +20,7 @@ pub struct DualHMC624A<LE1, LE2, SPI> {
 
 impl<LE1, LE2, SPI, LEE> DualHMC624A<LE1, LE2, SPI>
 where
-    SPI: FullDuplex<u8>,
+    SPI: Write<u8>,
     LE1: OutputPin<Error = LEE>,
     LE2: OutputPin<Error = LEE>,
 {
@@ -38,10 +40,15 @@ where
         self.le1.set_low().map_err(|e| Error::LeError(e))?;
         self.le2.set_low().map_err(|e| Error::LeError(e))?;
         // Shift out the bits
-        self.spi.send(setting).map_err(|_| Error::SpiError)?;
-        // LEs to high to latch the state
+        self.spi.write(&[setting]).map_err(|_| Error::SpiError)?;
+        // Wait for the bits to actually be shifted in
+        delay(100);
+        // Pulse LEs to latch the state
         self.le1.set_high().map_err(|e| Error::LeError(e))?;
         self.le2.set_high().map_err(|e| Error::LeError(e))?;
+        delay(100);
+        self.le1.set_low().map_err(|e| Error::LeError(e))?;
+        self.le2.set_low().map_err(|e| Error::LeError(e))?;
         // We're done!
         Ok(())
     }
