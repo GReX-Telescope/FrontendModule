@@ -1,0 +1,54 @@
+12-20 13:05:49 com_github_MitjaNemec_ReplicateLayout.action_replicate_layout 278:Plugin executed on: 'linux'
+12-20 13:05:49 com_github_MitjaNemec_ReplicateLayout.action_replicate_layout 279:Plugin executed with python version: '3.10.8 (main, Nov  1 2022, 14:18:21) [GCC 12.2.0]'
+12-20 13:05:49 com_github_MitjaNemec_ReplicateLayout.action_replicate_layout 280:KiCad build version: (6.0.9)
+12-20 13:05:49 com_github_MitjaNemec_ReplicateLayout.action_replicate_layout 281:Plugin version: 1.1.0
+12-20 13:05:49 com_github_MitjaNemec_ReplicateLayout.action_replicate_layout 282:Frame repr: <wx._core.Frame object at 0x7fedeb4f6290>
+12-20 13:05:49 com_github_MitjaNemec_ReplicateLayout.action_replicate_layout 301:Preparing replicator with U22 as a reference
+12-20 13:05:49 com_github_MitjaNemec_ReplicateLayout.replicate_layout 98:getting a list of all footprints on board
+12-20 13:05:49 com_github_MitjaNemec_ReplicateLayout.action_replicate_layout 329:source anchor footprint is 'U22'
+Located on: ['RF', 'Output Stage 1', 'Power Sensor']
+With filenames: ['rf_combined.kicad_sch', 'output.kicad_sch', 'power_sense.kicad_sch']
+With sheet_id:['RF', 'Output Stage 1', 'Power Sensor']
+12-20 13:05:49 com_github_MitjaNemec_ReplicateLayout.action_replicate_layout 336:Corresponding footprints are 
+[('U27', ['RF', 'Output Stage 2', 'Power Sensor']), ('U22', ['RF', 'Output Stage 1', 'Power Sensor'])]
+12-20 13:05:49 com_github_MitjaNemec_ReplicateLayout.action_replicate_layout 348:Showing dialog
+12-20 13:05:49 com_github_MitjaNemec_ReplicateLayout.action_replicate_layout 354:Toolbar position: wx.Point(3966, 1134)
+12-20 13:05:49 com_github_MitjaNemec_ReplicateLayout.action_replicate_layout 360:Dialog position: wx.Point(3602, 1134)
+12-20 13:05:49 com_github_MitjaNemec_ReplicateLayout.replicate_layout 329:constructing a list of sheets suitable for replication on level:'RF', file:'rf_combined.kicad_sch'
+12-20 13:05:49 com_github_MitjaNemec_ReplicateLayout.replicate_layout 366:suitable sheets are:[]
+12-20 13:05:51 com_github_MitjaNemec_ReplicateLayout.replicate_layout 329:constructing a list of sheets suitable for replication on level:'Power Sensor', file:'power_sense.kicad_sch'
+12-20 13:05:51 com_github_MitjaNemec_ReplicateLayout.replicate_layout 366:suitable sheets are:[['RF', 'Output Stage 2', 'Power Sensor']]
+12-20 13:05:53 com_github_MitjaNemec_ReplicateLayout.replicate_layout 329:constructing a list of sheets suitable for replication on level:'Power Sensor', file:'power_sense.kicad_sch'
+12-20 13:05:53 com_github_MitjaNemec_ReplicateLayout.replicate_layout 366:suitable sheets are:[['RF', 'Output Stage 2', 'Power Sensor']]
+12-20 13:05:53 com_github_MitjaNemec_ReplicateLayout.action_replicate_layout 128:Replicating layout
+12-20 13:05:53 com_github_MitjaNemec_ReplicateLayout.replicate_layout 146:Starting replication of sheets: [['RF', 'Output Stage 2', 'Power Sensor']]
+on level: ['RF', 'Output Stage 1', 'Power Sensor']
+with tracks=True, zone=True, text=True, containing=True, remove=False, locked=False, by_group=False
+12-20 13:05:53 root 218:updating GUI message: 'Preparing for replication'
+12-20 13:05:53 root 223:updating GUI with: 0
+12-20 13:05:53 com_github_MitjaNemec_ReplicateLayout.replicate_layout 215:Getting the list of source footprints
+12-20 13:05:53 root 223:updating GUI with: 0
+12-20 13:05:53 com_github_MitjaNemec_ReplicateLayout.replicate_layout 230:Getting the list of all the remaining footprints
+12-20 13:05:53 com_github_MitjaNemec_ReplicateLayout.replicate_layout 235:Getting nets local to source footprints
+12-20 13:05:53 com_github_MitjaNemec_ReplicateLayout.replicate_layout 238:Getting source bounding box
+12-20 13:05:53 com_github_MitjaNemec_ReplicateLayout.replicate_layout 242:Getting source tracks
+12-20 13:05:53 com_github_MitjaNemec_ReplicateLayout.replicate_layout 251:Getting source zones
+12-20 13:05:53 com_github_MitjaNemec_ReplicateLayout.replicate_layout 260:Getting source text items
+12-20 13:05:53 com_github_MitjaNemec_ReplicateLayout.replicate_layout 269:Getting source drawing items
+12-20 13:05:53 root 218:updating GUI message: 'Replicating footprints'
+12-20 13:05:53 com_github_MitjaNemec_ReplicateLayout.replicate_layout 663:Replicating footprints
+12-20 13:05:53 com_github_MitjaNemec_ReplicateLayout.replicate_layout 669:Replicating footprints on sheet ['RF', 'Output Stage 2', 'Power Sensor']
+12-20 13:05:53 root 218:updating GUI message: 'Replicating tracks'
+12-20 13:05:53 com_github_MitjaNemec_ReplicateLayout.replicate_layout 829:Replicating tracks
+12-20 13:05:53 com_github_MitjaNemec_ReplicateLayout.replicate_layout 835:Replicating tracks on sheet ['RF', 'Output Stage 2', 'Power Sensor']
+12-20 13:05:53 root 218:updating GUI message: 'Replicating zones'
+12-20 13:05:53 root 223:updating GUI with: 0
+12-20 13:05:53 com_github_MitjaNemec_ReplicateLayout.replicate_layout 887:Replicating zones
+12-20 13:05:53 com_github_MitjaNemec_ReplicateLayout.replicate_layout 894:Replicating zones on sheet ['RF', 'Output Stage 2', 'Power Sensor']
+12-20 13:05:53 root 218:updating GUI message: 'Replicating text'
+12-20 13:05:53 com_github_MitjaNemec_ReplicateLayout.replicate_layout 957:Replicating text
+12-20 13:05:53 com_github_MitjaNemec_ReplicateLayout.replicate_layout 964:Replicating text on sheet ['RF', 'Output Stage 2', 'Power Sensor']
+12-20 13:05:53 root 218:updating GUI message: 'Replicating drawings'
+12-20 13:05:53 com_github_MitjaNemec_ReplicateLayout.replicate_layout 997:Replicating drawings
+12-20 13:05:53 com_github_MitjaNemec_ReplicateLayout.replicate_layout 1003:Replicating drawings on sheet ['RF', 'Output Stage 2', 'Power Sensor']
+12-20 13:05:54 com_github_MitjaNemec_ReplicateLayout.action_replicate_layout 152:Replication complete
