@@ -1,3 +1,5 @@
 (sym_lib_table
+  (version 7)
   (lib (name "Project Library")(type "KiCad")(uri "${KIPRJMOD}/Project Library.kicad_sym")(options "")(descr ""))
+  (lib (name "DSA2K")(type "KiCad")(uri "C:/Users/Kiran Shila/fiber-transmitter/hardware/dsa2k_lib/symbols/DSA2K.kicad_sym")(options "")(descr ""))
 )
