@@ -8,15 +8,9 @@ env:
 jobs:
   building:
     name: Building
-    continue-on-error: ${{ matrix.experimental || false }}
     strategy:
       matrix:
-        # All generated code should be running on stable now
-        rust: [nightly, stable]
-        include:
-          # Nightly is only for reference and allowed to fail
-          - rust: nightly
-            experimental: true
+        rust: [nightly]
         os:
           # Check compilation works on common OSes
           # (i.e. no path issues)
