@@ -2,7 +2,6 @@ use embedded_hal::adc::{Channel, OneShot};
 use hal::{
     i2c::I2C,
     pac::{I2C0, SPI0, UART1},
-    pwm::{FreeRunning, Pwm1, A, B},
     Adc,
 };
 use rp2040_hal as hal;
@@ -88,8 +87,6 @@ hal::bsp_pins! {
 pub type Uart = hal::uart::UartPeripheral<hal::uart::Enabled, UART1, (Txd, Rxd)>;
 pub type I2c = I2C<I2C0, (Sda, Scl)>;
 pub type Spi = hal::Spi<hal::spi::Enabled, SPI0, 6>;
-pub type Rf1CalPwm = hal::pwm::Channel<Pwm1, FreeRunning, B>;
-pub type Rf2CalPwm = hal::pwm::Channel<Pwm1, FreeRunning, A>;
 
 /// Get the 0..1 scaled floating point number representing the 12 bit ADC value
 pub fn read_adc<PIN>(adc: &mut Adc, pin: &mut PIN) -> Result<f32, ()>

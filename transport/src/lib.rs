@@ -14,10 +14,6 @@ pub enum Action {
     Lna2Power(bool),
     // Set attenuation
     SetAtten(f32),
-    // Enable/Disable calibration tone for LNA1
-    SetCal1(bool),
-    // Enable/Disable calibration tone for LNA2
-    SetCal2(bool),
 }
 
 /// Monitor data sent in response to a [`Command::Monitor`] call
