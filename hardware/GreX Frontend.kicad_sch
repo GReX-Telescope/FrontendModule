@@ -25,7 +25,7 @@
   (symbol (lib_id "DSA2000:DSA_Logo") (at 134.62 111.125 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid dec36c7e-fdba-488a-a546-81b7ee1a42e5)
-    (property "Reference" "U28" (at 135.89 109.8549 0)
+    (property "Reference" "U1" (at 135.89 109.8549 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
     (property "Value" "DSA_Logo" (at 135.89 112.3949 0)
@@ -40,7 +40,7 @@
     (instances
       (project "GreX Frontend"
         (path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55"
-          (reference "U28") (unit 1)
+          (reference "U1") (unit 1)
         )
       )
     )

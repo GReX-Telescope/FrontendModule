@@ -256,7 +256,7 @@
   (symbol (lib_id "Device:L") (at 142.875 94.615 90) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 01ced5bc-9d3d-45c6-b21a-8856875072ac)
-    (property "Reference" "L36" (at 142.875 88.265 90)
+    (property "Reference" "L32" (at 142.875 88.265 90)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "13n" (at 142.875 90.805 90)
@@ -279,10 +279,10 @@
     (instances
       (project "GreX Frontend"
         (path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55/546148dc-8a5c-4178-ace4-1d6889891417/a017f007-4f07-4a1d-ad0a-a026b6928c1c/11e981c2-886b-4432-8a99-34082f136582"
-          (reference "L36") (unit 1)
+          (reference "L32") (unit 1)
         )
         (path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55/546148dc-8a5c-4178-ace4-1d6889891417/b519df87-7202-4a5b-9b12-1283a4d92d20/11e981c2-886b-4432-8a99-34082f136582"
-          (reference "L29") (unit 1)
+          (reference "L19") (unit 1)
         )
       )
     )
@@ -291,7 +291,7 @@
   (symbol (lib_id "Device:L") (at 136.525 89.535 180) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 0a254596-c1ad-41e3-9a11-4f6066339f83)
-    (property "Reference" "L35" (at 137.16 88.2649 0)
+    (property "Reference" "L31" (at 137.16 88.2649 0)
       (effects (font (size 1.27 1.27)) (justify right))
     )
     (property "Value" "27n" (at 137.16 90.8049 0)
@@ -314,10 +314,10 @@
     (instances
       (project "GreX Frontend"
         (path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55/546148dc-8a5c-4178-ace4-1d6889891417/a017f007-4f07-4a1d-ad0a-a026b6928c1c/11e981c2-886b-4432-8a99-34082f136582"
-          (reference "L35") (unit 1)
+          (reference "L31") (unit 1)
         )
         (path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55/546148dc-8a5c-4178-ace4-1d6889891417/b519df87-7202-4a5b-9b12-1283a4d92d20/11e981c2-886b-4432-8a99-34082f136582"
-          (reference "L23") (unit 1)
+          (reference "L18") (unit 1)
         )
       )
     )
@@ -326,7 +326,7 @@
   (symbol (lib_id "Device:C") (at 148.59 99.695 180) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 0d84c14e-4786-41e2-9f00-924cee67c5fa)
-    (property "Reference" "C95" (at 152.4 98.4249 0)
+    (property "Reference" "C72" (at 152.4 98.4249 0)
       (effects (font (size 1.27 1.27)) (justify right))
     )
     (property "Value" "5p" (at 152.4 100.9649 0)
@@ -349,10 +349,10 @@
     (instances
       (project "GreX Frontend"
         (path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55/546148dc-8a5c-4178-ace4-1d6889891417/a017f007-4f07-4a1d-ad0a-a026b6928c1c/11e981c2-886b-4432-8a99-34082f136582"
-          (reference "C95") (unit 1)
+          (reference "C72") (unit 1)
         )
         (path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55/546148dc-8a5c-4178-ace4-1d6889891417/b519df87-7202-4a5b-9b12-1283a4d92d20/11e981c2-886b-4432-8a99-34082f136582"
-          (reference "C71") (unit 1)
+          (reference "C50") (unit 1)
         )
       )
     )
@@ -361,7 +361,7 @@
   (symbol (lib_id "power:GND") (at 148.59 104.14 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 1aad45c9-9961-49d5-8dc1-d7e95eb30f17)
-    (property "Reference" "#PWR0200" (at 148.59 110.49 0)
+    (property "Reference" "#PWR0113" (at 148.59 110.49 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GND" (at 148.59 108.585 0)
@@ -377,10 +377,10 @@
     (instances
       (project "GreX Frontend"
         (path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55/546148dc-8a5c-4178-ace4-1d6889891417/a017f007-4f07-4a1d-ad0a-a026b6928c1c/11e981c2-886b-4432-8a99-34082f136582"
-          (reference "#PWR0200") (unit 1)
+          (reference "#PWR0113") (unit 1)
         )
         (path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55/546148dc-8a5c-4178-ace4-1d6889891417/b519df87-7202-4a5b-9b12-1283a4d92d20/11e981c2-886b-4432-8a99-34082f136582"
-          (reference "#PWR0197") (unit 1)
+          (reference "#PWR081") (unit 1)
         )
       )
     )
@@ -389,7 +389,7 @@
   (symbol (lib_id "power:GND") (at 136.525 104.14 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 1ada245b-3eb3-4e89-9782-97c9650adfea)
-    (property "Reference" "#PWR0199" (at 136.525 110.49 0)
+    (property "Reference" "#PWR0111" (at 136.525 110.49 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GND" (at 136.525 108.585 0)
@@ -405,10 +405,10 @@
     (instances
       (project "GreX Frontend"
         (path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55/546148dc-8a5c-4178-ace4-1d6889891417/a017f007-4f07-4a1d-ad0a-a026b6928c1c/11e981c2-886b-4432-8a99-34082f136582"
-          (reference "#PWR0199") (unit 1)
+          (reference "#PWR0111") (unit 1)
         )
         (path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55/546148dc-8a5c-4178-ace4-1d6889891417/b519df87-7202-4a5b-9b12-1283a4d92d20/11e981c2-886b-4432-8a99-34082f136582"
-          (reference "#PWR0196") (unit 1)
+          (reference "#PWR079") (unit 1)
         )
       )
     )
@@ -417,7 +417,7 @@
   (symbol (lib_id "Device:C") (at 136.525 99.695 180) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 1bebe85c-1e38-4921-af88-5761ed70c0b5)
-    (property "Reference" "C94" (at 139.7 98.4249 0)
+    (property "Reference" "C71" (at 139.7 98.4249 0)
       (effects (font (size 1.27 1.27)) (justify right))
     )
     (property "Value" "1.6" (at 139.7 100.9649 0)
@@ -440,10 +440,10 @@
     (instances
       (project "GreX Frontend"
         (path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55/546148dc-8a5c-4178-ace4-1d6889891417/a017f007-4f07-4a1d-ad0a-a026b6928c1c/11e981c2-886b-4432-8a99-34082f136582"
-          (reference "C94") (unit 1)
+          (reference "C71") (unit 1)
         )
         (path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55/546148dc-8a5c-4178-ace4-1d6889891417/b519df87-7202-4a5b-9b12-1283a4d92d20/11e981c2-886b-4432-8a99-34082f136582"
-          (reference "C70") (unit 1)
+          (reference "C49") (unit 1)
         )
       )
     )
@@ -452,7 +452,7 @@
   (symbol (lib_id "power:GND") (at 148.59 84.455 180) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 1d79f885-83d6-4720-92cd-18b10a33fc69)
-    (property "Reference" "#PWR0105" (at 148.59 78.105 0)
+    (property "Reference" "#PWR0112" (at 148.59 78.105 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GND" (at 148.59 80.01 0)
@@ -468,10 +468,10 @@
     (instances
       (project "GreX Frontend"
         (path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55/546148dc-8a5c-4178-ace4-1d6889891417/a017f007-4f07-4a1d-ad0a-a026b6928c1c/11e981c2-886b-4432-8a99-34082f136582"
-          (reference "#PWR0105") (unit 1)
+          (reference "#PWR0112") (unit 1)
         )
         (path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55/546148dc-8a5c-4178-ace4-1d6889891417/b519df87-7202-4a5b-9b12-1283a4d92d20/11e981c2-886b-4432-8a99-34082f136582"
-          (reference "#PWR0101") (unit 1)
+          (reference "#PWR080") (unit 1)
         )
       )
     )
@@ -480,7 +480,7 @@
   (symbol (lib_id "power:GND") (at 136.525 84.455 180) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 30703d23-1c1b-4c4c-9bc5-18a871d2de7c)
-    (property "Reference" "#PWR0106" (at 136.525 78.105 0)
+    (property "Reference" "#PWR0110" (at 136.525 78.105 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GND" (at 136.525 80.01 0)
@@ -496,10 +496,10 @@
     (instances
       (project "GreX Frontend"
         (path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55/546148dc-8a5c-4178-ace4-1d6889891417/a017f007-4f07-4a1d-ad0a-a026b6928c1c/11e981c2-886b-4432-8a99-34082f136582"
-          (reference "#PWR0106") (unit 1)
+          (reference "#PWR0110") (unit 1)
         )
         (path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55/546148dc-8a5c-4178-ace4-1d6889891417/b519df87-7202-4a5b-9b12-1283a4d92d20/11e981c2-886b-4432-8a99-34082f136582"
-          (reference "#PWR0102") (unit 1)
+          (reference "#PWR078") (unit 1)
         )
       )
     )
@@ -508,7 +508,7 @@
   (symbol (lib_id "power:GND") (at 123.825 84.455 180) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 31699613-6627-4da4-8b59-8c5356376945)
-    (property "Reference" "#PWR0150" (at 123.825 78.105 0)
+    (property "Reference" "#PWR0108" (at 123.825 78.105 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GND" (at 123.825 80.01 0)
@@ -524,10 +524,10 @@
     (instances
       (project "GreX Frontend"
         (path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55/546148dc-8a5c-4178-ace4-1d6889891417/a017f007-4f07-4a1d-ad0a-a026b6928c1c/11e981c2-886b-4432-8a99-34082f136582"
-          (reference "#PWR0150") (unit 1)
+          (reference "#PWR0108") (unit 1)
         )
         (path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55/546148dc-8a5c-4178-ace4-1d6889891417/b519df87-7202-4a5b-9b12-1283a4d92d20/11e981c2-886b-4432-8a99-34082f136582"
-          (reference "#PWR0104") (unit 1)
+          (reference "#PWR076") (unit 1)
         )
       )
     )
@@ -536,7 +536,7 @@
   (symbol (lib_id "Device:L") (at 148.59 89.535 180) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 36825bbc-6081-4ce0-a759-6d8286187ca5)
-    (property "Reference" "L37" (at 149.225 88.2649 0)
+    (property "Reference" "L33" (at 149.225 88.2649 0)
       (effects (font (size 1.27 1.27)) (justify right))
     )
     (property "Value" "2.2n" (at 149.225 90.8049 0)
@@ -559,10 +559,10 @@
     (instances
       (project "GreX Frontend"
         (path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55/546148dc-8a5c-4178-ace4-1d6889891417/a017f007-4f07-4a1d-ad0a-a026b6928c1c/11e981c2-886b-4432-8a99-34082f136582"
-          (reference "L37") (unit 1)
+          (reference "L33") (unit 1)
         )
         (path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55/546148dc-8a5c-4178-ace4-1d6889891417/b519df87-7202-4a5b-9b12-1283a4d92d20/11e981c2-886b-4432-8a99-34082f136582"
-          (reference "L30") (unit 1)
+          (reference "L20") (unit 1)
         )
       )
     )
@@ -571,7 +571,7 @@
   (symbol (lib_id "Device:C") (at 117.475 94.615 270) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 5ff83552-6477-4ba9-9873-74117ca7e28d)
-    (property "Reference" "C92" (at 117.475 86.995 90)
+    (property "Reference" "C69" (at 117.475 86.995 90)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "1.3p" (at 117.475 89.535 90)
@@ -594,10 +594,10 @@
     (instances
       (project "GreX Frontend"
         (path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55/546148dc-8a5c-4178-ace4-1d6889891417/a017f007-4f07-4a1d-ad0a-a026b6928c1c/11e981c2-886b-4432-8a99-34082f136582"
-          (reference "C92") (unit 1)
+          (reference "C69") (unit 1)
         )
         (path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55/546148dc-8a5c-4178-ace4-1d6889891417/b519df87-7202-4a5b-9b12-1283a4d92d20/11e981c2-886b-4432-8a99-34082f136582"
-          (reference "C4") (unit 1)
+          (reference "C47") (unit 1)
         )
       )
     )
@@ -606,7 +606,7 @@
   (symbol (lib_id "Device:L") (at 130.81 94.615 90) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 7ebac855-dafa-42ba-bd89-a59368ed7f2f)
-    (property "Reference" "L34" (at 130.81 88.265 90)
+    (property "Reference" "L30" (at 130.81 88.265 90)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "13n" (at 130.81 90.805 90)
@@ -629,10 +629,10 @@
     (instances
       (project "GreX Frontend"
         (path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55/546148dc-8a5c-4178-ace4-1d6889891417/a017f007-4f07-4a1d-ad0a-a026b6928c1c/11e981c2-886b-4432-8a99-34082f136582"
-          (reference "L34") (unit 1)
+          (reference "L30") (unit 1)
         )
         (path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55/546148dc-8a5c-4178-ace4-1d6889891417/b519df87-7202-4a5b-9b12-1283a4d92d20/11e981c2-886b-4432-8a99-34082f136582"
-          (reference "L22") (unit 1)
+          (reference "L17") (unit 1)
         )
       )
     )
@@ -641,7 +641,7 @@
   (symbol (lib_id "Device:L") (at 157.48 94.615 90) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 89ea3e6a-e749-4d55-81ac-da30e07aabc1)
-    (property "Reference" "L38" (at 157.48 88.265 90)
+    (property "Reference" "L34" (at 157.48 88.265 90)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "8.7n" (at 157.48 90.805 90)
@@ -664,10 +664,10 @@
     (instances
       (project "GreX Frontend"
         (path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55/546148dc-8a5c-4178-ace4-1d6889891417/a017f007-4f07-4a1d-ad0a-a026b6928c1c/11e981c2-886b-4432-8a99-34082f136582"
-          (reference "L38") (unit 1)
+          (reference "L34") (unit 1)
         )
         (path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55/546148dc-8a5c-4178-ace4-1d6889891417/b519df87-7202-4a5b-9b12-1283a4d92d20/11e981c2-886b-4432-8a99-34082f136582"
-          (reference "L31") (unit 1)
+          (reference "L21") (unit 1)
         )
       )
     )
@@ -676,7 +676,7 @@
   (symbol (lib_id "Device:L") (at 108.585 94.615 90) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 8c42dbe1-978e-4b67-a46c-f322bc727c74)
-    (property "Reference" "L32" (at 108.585 88.265 90)
+    (property "Reference" "L28" (at 108.585 88.265 90)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "8.7n" (at 108.585 90.805 90)
@@ -699,10 +699,10 @@
     (instances
       (project "GreX Frontend"
         (path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55/546148dc-8a5c-4178-ace4-1d6889891417/a017f007-4f07-4a1d-ad0a-a026b6928c1c/11e981c2-886b-4432-8a99-34082f136582"
-          (reference "L32") (unit 1)
+          (reference "L28") (unit 1)
         )
         (path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55/546148dc-8a5c-4178-ace4-1d6889891417/b519df87-7202-4a5b-9b12-1283a4d92d20/11e981c2-886b-4432-8a99-34082f136582"
-          (reference "L13") (unit 1)
+          (reference "L15") (unit 1)
         )
       )
     )
@@ -711,7 +711,7 @@
   (symbol (lib_id "Device:L") (at 123.825 89.535 180) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid a21f8846-07a1-4800-83d1-aba304121745)
-    (property "Reference" "L33" (at 124.46 88.2649 0)
+    (property "Reference" "L29" (at 124.46 88.2649 0)
       (effects (font (size 1.27 1.27)) (justify right))
     )
     (property "Value" "2.2n" (at 124.46 90.8049 0)
@@ -734,10 +734,10 @@
     (instances
       (project "GreX Frontend"
         (path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55/546148dc-8a5c-4178-ace4-1d6889891417/a017f007-4f07-4a1d-ad0a-a026b6928c1c/11e981c2-886b-4432-8a99-34082f136582"
-          (reference "L33") (unit 1)
+          (reference "L29") (unit 1)
         )
         (path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55/546148dc-8a5c-4178-ace4-1d6889891417/b519df87-7202-4a5b-9b12-1283a4d92d20/11e981c2-886b-4432-8a99-34082f136582"
-          (reference "L14") (unit 1)
+          (reference "L16") (unit 1)
         )
       )
     )
@@ -746,7 +746,7 @@
   (symbol (lib_id "Device:C") (at 123.825 99.695 180) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid a8617bc6-14ae-412b-9e99-4cbfa9a53257)
-    (property "Reference" "C93" (at 127.635 98.4249 0)
+    (property "Reference" "C70" (at 127.635 98.4249 0)
       (effects (font (size 1.27 1.27)) (justify right))
     )
     (property "Value" "5p" (at 127.635 100.9649 0)
@@ -769,10 +769,10 @@
     (instances
       (project "GreX Frontend"
         (path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55/546148dc-8a5c-4178-ace4-1d6889891417/a017f007-4f07-4a1d-ad0a-a026b6928c1c/11e981c2-886b-4432-8a99-34082f136582"
-          (reference "C93") (unit 1)
+          (reference "C70") (unit 1)
         )
         (path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55/546148dc-8a5c-4178-ace4-1d6889891417/b519df87-7202-4a5b-9b12-1283a4d92d20/11e981c2-886b-4432-8a99-34082f136582"
-          (reference "C11") (unit 1)
+          (reference "C48") (unit 1)
         )
       )
     )
@@ -781,7 +781,7 @@
   (symbol (lib_id "Device:C") (at 165.1 94.615 270) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid e4aff32e-917e-44a3-a234-d983bf569d15)
-    (property "Reference" "C96" (at 165.1 86.995 90)
+    (property "Reference" "C73" (at 165.1 86.995 90)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "1.3p" (at 165.1 89.535 90)
@@ -804,10 +804,10 @@
     (instances
       (project "GreX Frontend"
         (path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55/546148dc-8a5c-4178-ace4-1d6889891417/a017f007-4f07-4a1d-ad0a-a026b6928c1c/11e981c2-886b-4432-8a99-34082f136582"
-          (reference "C96") (unit 1)
+          (reference "C73") (unit 1)
         )
         (path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55/546148dc-8a5c-4178-ace4-1d6889891417/b519df87-7202-4a5b-9b12-1283a4d92d20/11e981c2-886b-4432-8a99-34082f136582"
-          (reference "C72") (unit 1)
+          (reference "C51") (unit 1)
         )
       )
     )
@@ -816,7 +816,7 @@
   (symbol (lib_id "power:GND") (at 123.825 104.14 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid f6dc5c74-5969-46e9-aef4-f82063dd3efa)
-    (property "Reference" "#PWR0201" (at 123.825 110.49 0)
+    (property "Reference" "#PWR0109" (at 123.825 110.49 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GND" (at 123.825 108.585 0)
@@ -832,10 +832,10 @@
     (instances
       (project "GreX Frontend"
         (path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55/546148dc-8a5c-4178-ace4-1d6889891417/a017f007-4f07-4a1d-ad0a-a026b6928c1c/11e981c2-886b-4432-8a99-34082f136582"
-          (reference "#PWR0201") (unit 1)
+          (reference "#PWR0109") (unit 1)
         )
         (path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55/546148dc-8a5c-4178-ace4-1d6889891417/b519df87-7202-4a5b-9b12-1283a4d92d20/11e981c2-886b-4432-8a99-34082f136582"
-          (reference "#PWR0198") (unit 1)
+          (reference "#PWR077") (unit 1)
         )
       )
     )
