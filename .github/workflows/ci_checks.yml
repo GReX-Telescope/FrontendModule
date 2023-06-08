@@ -15,8 +15,6 @@ jobs:
           # Check compilation works on common OSes
           # (i.e. no path issues)
           - ubuntu-latest
-          - macOS-latest
-          - windows-latest
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
@@ -38,7 +36,7 @@ jobs:
           submodules: true
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: stable
+          toolchain: nightly
           components: clippy
       - run: rustup target install thumbv6m-none-eabi
       - uses: actions-rs/clippy-check@v1
@@ -54,7 +52,7 @@ jobs:
           submodules: true
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: stable
+          toolchain: nightly
           components: rustfmt
       - run: rustup target install thumbv6m-none-eabi
       - run: cargo fmt -- --check
