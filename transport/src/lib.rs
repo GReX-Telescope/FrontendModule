@@ -23,8 +23,6 @@ pub struct MonitorPayload {
     pub if1_power: f32,
     /// IF2 power in dBm
     pub if2_power: f32,
-    /// PCB surface temperature in C
-    pub surface_temp: f32,
     /// RP2040 internal temperature in C
     pub ic_temp: f32,
     /// Voltage and current of LNA1

@@ -1,6 +1,5 @@
 [workspace]
 members = ["firmware", "transport", "cli"]
-resolver = "2"
 
 # Profiles mostly intended for firmware - but won't hurt the GUI app
 

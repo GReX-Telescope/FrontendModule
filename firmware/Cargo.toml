@@ -8,19 +8,17 @@ forced-target = "thumbv6m-none-eabi"
 
 [dependencies]
 cortex-m-rtic = "1"
-cortex-m = { version = "0.7", features = ["critical-section-single-core"] }
+cortex-m = { version = "0.7" }
 cortex-m-rt = "0.7"
 embedded-hal = { version = "0.2", features = ["unproven"] }
 defmt = "0.3"
 defmt-rtt = "0.4"
 panic-probe = { version = "0.3", features = ["print-defmt"] }
-rp2040-monotonic = "1"
-rp2040-hal = { version="0.7", features=["rt"] }
-rp2040-boot2 = "0.2"
+rp2040-hal = { version="0.8", features=["rt", "rtic-monotonic", "critical-section-impl"] }
+rp2040-boot2 = "0.2" # Very mysteriously, bumping this to 0.3 breaks things???
 postcard = { version = "1", features = ["defmt"] }
-shared-bus ={ version =  "0.2", features = ["cortex-m"] }
 transport = { path = "../transport" }
 heapless = "0.7"
-fugit = { version = "0.3", features = ["defmt"] }
 ina3221 = { git = "https://github.com/kiranshila/INA3221", version = "0.1.0" }
 micromath = "2"
+fugit = {version = "0.3", features = ["defmt"]}

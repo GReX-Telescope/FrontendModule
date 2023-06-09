@@ -1,7 +1,6 @@
 use crate::{
     bsp::{read_temp, Rf1IfPow, Rf2IfPow},
     log_det::read_power,
-    tmp100::TMP100,
 };
 use defmt::error;
 use embedded_hal::blocking::i2c;
@@ -54,7 +53,6 @@ pub fn update_monitor_payload<I2C, E>(
     rf1_if_pow: &mut Rf1IfPow,
     rf2_if_pow: &mut Rf2IfPow,
     internal_temp: &mut TempSense,
-    tmp100: &mut TMP100<I2C>,
     ina3221: &mut INA3221<I2C>,
 ) where
     I2C: i2c::Read<Error = E> + i2c::Write<Error = E> + i2c::WriteRead<Error = E>,
@@ -64,14 +62,6 @@ pub fn update_monitor_payload<I2C, E>(
     payload.if2_power = read_power(adc, rf2_if_pow).unwrap();
     // Update internal temp
     payload.ic_temp = read_temp(adc, internal_temp).unwrap();
-    // Update surface temp
-    payload.surface_temp = match tmp100.temp_c() {
-        Ok(t) => t,
-        Err(_) => {
-            error!("Error reading TMP100");
-            return;
-        }
-    };
     // Voltages and currents - LNAs have Rsense of 1, Analog has Rsense of 0.2
     payload.lna1_power.voltage = bus_volt_log(ina3221, ina3221::Channel::Ch1);
     payload.lna1_power.current = shunt_volt_log(ina3221, ina3221::Channel::Ch1);

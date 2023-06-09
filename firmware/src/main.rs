@@ -5,11 +5,8 @@ mod atten;
 mod bsp;
 mod log_det;
 mod mnc;
-mod tmp100;
 
 use bsp::*;
-use core::cell::RefCell;
-use cortex_m::interrupt::Mutex;
 use defmt::*;
 use defmt_rtt as _;
 use embedded_hal::digital::v2::OutputPin;
@@ -19,19 +16,15 @@ use hal::{
     clocks::Clock,
     i2c::I2C,
     pac,
+    timer::{monotonic::Monotonic, Alarm0},
     uart::{UartConfig, UartPeripheral},
 };
 use heapless::Vec;
 use panic_probe as _;
 use rp2040_hal as hal;
-use rp2040_monotonic::Rp2040Monotonic;
-use shared_bus::I2cProxy;
-
-// Boy this is a thicc type
-type I2cBus = I2cProxy<'static, Mutex<RefCell<bsp::I2c>>>;
 
 // Bind software tasks to SIO_IRQ_PROC0, we're not using it
-#[rtic::app(device = pac, peripherals = true, dispatchers = [SIO_IRQ_PROC0])]
+#[rtic::app(device = pac, peripherals = true)]
 mod app {
     use super::*;
 
@@ -52,13 +45,12 @@ mod app {
         temp_sense: TempSense,
         uart: bsp::Uart,
         monitor_payload: transport::MonitorPayload,
-        tmp100: tmp100::TMP100<I2cBus>,
-        ina3221: ina3221::INA3221<I2cBus>,
+        ina3221: ina3221::INA3221<bsp::I2c>,
         atten: atten::DualHMC624A<Att1Le, Att2Le, Spi>,
     }
 
     #[monotonic(binds = TIMER_IRQ_0, default = true)]
-    type Tonic = Rp2040Monotonic;
+    type Tonic = Monotonic<Alarm0>;
 
     #[init]
     fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
@@ -71,11 +63,12 @@ mod app {
             hal::sio::spinlock_reset();
         }
 
-        // Create the RTIC timer
-        let mono = Rp2040Monotonic::new(cx.device.TIMER);
-
         // Grab the global RESETS
         let mut resets = cx.device.RESETS;
+
+        // Create the RTIC timer
+        let mut timer = hal::Timer::new(cx.device.TIMER, &mut resets);
+        let alarm = timer.alarm_0().unwrap();
 
         // Setup the clocks
         let mut watchdog = hal::Watchdog::new(cx.device.WATCHDOG);
@@ -124,8 +117,8 @@ mod app {
         // Set the RF status LEDs to off
         let mut rf1_status_led: Rf1StatusLed = pins.rf1_status_led.into_mode();
         let mut rf2_status_led: Rf2StatusLed = pins.rf2_status_led.into_mode();
-        rf1_status_led.set_low().unwrap();
-        rf2_status_led.set_low().unwrap();
+        rf1_status_led.set_high().unwrap();
+        rf2_status_led.set_high().unwrap();
 
         // Setup I2C for the TMP100 and INA3221
         let sda: Sda = pins.sda.into_mode();
@@ -138,14 +131,9 @@ mod app {
             &mut resets,
             &clocks.system_clock,
         );
-        let i2c_bus = shared_bus::new_cortexm!(I2c = i2c).unwrap();
-
-        // Initialize the TMP100
-        let mut tmp100 = tmp100::TMP100::new(i2c_bus.acquire_i2c(), 0b1001000);
-        tmp100.init().unwrap();
-
+        info!("Setting up I2C");
         // Setup the INA3221
-        let mut ina3221 = ina3221::INA3221::new(i2c_bus.acquire_i2c(), ina3221::AddressPin::Gnd);
+        let mut ina3221 = ina3221::INA3221::new(i2c, ina3221::AddressPin::Gnd);
         match ina3221.reset() {
             Ok(_) => (),
             Err(_) => error!("INA3221 failed to reset"),
@@ -154,7 +142,7 @@ mod app {
             Ok(_) => (),
             Err(_) => error!("INA3221 failed to set averages"),
         };
-
+        info!("Setting up SPI");
         // Setup the SPI pins and initial state of the latch enable pins (high)
         // pins are implicitly used by the SPI driver
         let _clk: Clk = pins.clk.into_mode();
@@ -194,11 +182,10 @@ mod app {
                 rf2_status_led,
                 temp_sense,
                 uart,
-                tmp100,
                 ina3221,
                 atten,
             },
-            init::Monotonics(mono),
+            init::Monotonics(Monotonic::new(timer, alarm)),
         )
     }
 
@@ -232,13 +219,12 @@ mod app {
     }
 
     // Only one task - we're just going to react to requests for either monitor data or control
-    #[task(binds = UART1_IRQ, local = [uart, temp_sense, monitor_payload, tmp100, ina3221, lna_1, lna_2, atten], shared = [rf1_if_pow, rf2_if_pow, adc, state])]
+    #[task(binds = UART1_IRQ, local = [uart, temp_sense, monitor_payload, ina3221, lna_1, lna_2, atten], shared = [rf1_if_pow, rf2_if_pow, adc, state])]
     fn on_rx(cx: on_rx::Context) {
         // Grab all the locals
         let on_rx::LocalResources {
             uart,
             temp_sense,
-            tmp100,
             monitor_payload,
             ina3221,
             lna_1,
@@ -291,7 +277,6 @@ mod app {
                         rf1_if_pow,
                         rf2_if_pow,
                         temp_sense,
-                        tmp100,
                         ina3221,
                     );
                 });
