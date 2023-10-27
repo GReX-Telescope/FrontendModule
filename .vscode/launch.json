@@ -2,17 +2,41 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Firmware - JLink Debug",
-            "cwd": "${workspaceFolder}",
-            "executable": "./target/thumbv6m-none-eabi/debug/firmware",
+            "preLaunchTask": "cargo build firmware",
+            "type": "probe-rs-debug",
             "request": "launch",
-            "type": "cortex-debug",
-            "servertype": "jlink",
-            "serverpath": "C:/Program Files/SEGGER/JLink/JLinkGDBServerCL.exe",
-            //"serverpath": "/usr/bin/JLinkGDBServerCLExe",
-            "svdFile": "${workspaceRoot}/.vscode/rp2040.svd",
-            "interface": "swd",
-            "device": "RP2040_M0_0",
+            "name": "FEM Debug",
+            "cwd": "${workspaceFolder}",
+            "chip": "rp2040",
+            // RP2040 doesn't support connectUnderReset
+            "connectUnderReset": false,
+            "speed": 4000,
+            "probe": "1366:1008",
+            "runtimeExecutable": "probe-rs",
+            "runtimeArgs": [
+                "dap-server"
+            ],
+            "flashingConfig": {
+                "flashingEnabled": true,
+                "resetAfterFlashing": true,
+                "haltAfterReset": true,
+            },
+            "coreConfigs": [
+                {
+                    "coreIndex": 0,
+                    "programBinary": "target/thumbv6m-none-eabi/debug/firmware",
+                    "chip": "RP2040",
+                    "svdFile": "./.vscode/rp2040.svd",
+                    "rttEnabled": true,
+                    "options": {
+                        "env": {
+                            "DEFMT_LOG": "debug"
+                        }
+                    },
+                }
+            ],
+            "consoleLogLevel": "Info", //Error, Warn, Info, Debug, Trace
+            "wireProtocol": "Swd"
         }
     ]
 }

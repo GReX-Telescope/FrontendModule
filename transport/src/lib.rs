@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 
 /// Actions that can be performed
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
+#[cfg_attr(feature = "use-defmt", derive(defmt::Format))]
 pub enum Action {
     /// Set the IF "Good" power threshold in dBm
     SetIfLevel(f32),
@@ -17,7 +18,8 @@ pub enum Action {
 }
 
 /// Monitor data sent in response to a [`Command::Monitor`] call
-#[derive(Serialize, Deserialize, Debug, PartialEq, Default)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Default, Clone)]
+#[cfg_attr(feature = "use-defmt", derive(defmt::Format))]
 pub struct MonitorPayload {
     /// IF1 power in dBm
     pub if1_power: f32,
@@ -33,7 +35,8 @@ pub struct MonitorPayload {
     pub analog_power: Power,
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Default)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Default, Clone)]
+#[cfg_attr(feature = "use-defmt", derive(defmt::Format))]
 pub struct Power {
     /// Votlage in volts
     pub voltage: f32,
@@ -43,7 +46,20 @@ pub struct Power {
 
 /// Payloads from MnC software to the FEM
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
+#[cfg_attr(feature = "use-defmt", derive(defmt::Format))]
 pub enum Command {
     Monitor,
     Control(Action),
+}
+
+/// Payloads from FEM to MnC software
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
+#[cfg_attr(feature = "use-defmt", derive(defmt::Format))]
+pub enum Response {
+    /// Previous command was ok, but didn't need a response
+    Ack,
+    /// Error
+    Error,
+    /// Response to monitor request
+    Monitor(MonitorPayload),
 }

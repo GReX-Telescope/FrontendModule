@@ -1,6 +1,13 @@
 [default.probe]
 protocol = "Swd"
-speed = 4000
+speed = 20000
+# If you only have one probe cargo embed will pick automatically
+# Otherwise: add your probe's VID/PID/serial to filter
+
+## JLink CMIS DAP
+usb_vid = "1366"
+usb_pid = "1008"
+# serial = "test"
 
 [default.flashing]
 enabled = true

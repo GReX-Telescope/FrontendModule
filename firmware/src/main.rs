@@ -9,311 +9,228 @@ mod mnc;
 use bsp::*;
 use defmt::*;
 use defmt_rtt as _;
-use embedded_hal::digital::v2::OutputPin;
 use fugit::RateExtU32;
-use hal::{
-    adc::{Adc, TempSense},
-    clocks::Clock,
-    i2c::I2C,
-    pac,
-    timer::{monotonic::Monotonic, Alarm0},
-    uart::{UartConfig, UartPeripheral},
-};
-use heapless::Vec;
 use panic_probe as _;
+use postcard::{
+    accumulator::{CobsAccumulator, FeedResult},
+    to_slice_cobs,
+};
+
+// Embedded Hal traits
+use embedded_hal::digital::v2::OutputPin;
+
+use hal::{
+    adc::{Adc, AdcPin},
+    clocks::{init_clocks_and_plls, Clock},
+    entry, pac,
+    sio::Sio,
+    uart::{DataBits, StopBits, UartConfig, UartPeripheral},
+    watchdog::Watchdog,
+    I2C,
+};
 use rp2040_hal as hal;
 
-// Bind software tasks to SIO_IRQ_PROC0, we're not using it
-#[rtic::app(device = pac, peripherals = true)]
-mod app {
-    use super::*;
+#[entry]
+fn main() -> ! {
+    info!("FEM Booting!");
+    // Setup peripherals, core clocks, etc.
+    let mut pac = pac::Peripherals::take().unwrap();
+    let _core = pac::CorePeripherals::take().unwrap();
+    let mut watchdog = Watchdog::new(pac.WATCHDOG);
+    let sio = Sio::new(pac.SIO);
 
-    #[shared]
-    struct Shared {
-        rf1_if_pow: Rf1IfPow,
-        rf2_if_pow: Rf2IfPow,
-        adc: Adc,
-        state: mnc::State,
-    }
+    let clocks = init_clocks_and_plls(
+        bsp::XOSC_CRYSTAL_FREQ,
+        pac.XOSC,
+        pac.CLOCKS,
+        pac.PLL_SYS,
+        pac.PLL_USB,
+        &mut pac.RESETS,
+        &mut watchdog,
+    )
+    .ok()
+    .unwrap();
 
-    #[local]
-    struct Local {
-        rf1_status_led: Rf1StatusLed,
-        rf2_status_led: Rf2StatusLed,
-        lna_1: Rf1LnaEn,
-        lna_2: Rf2LnaEn,
-        temp_sense: TempSense,
-        uart: bsp::Uart,
-        monitor_payload: transport::MonitorPayload,
-        ina3221: ina3221::INA3221<bsp::I2c>,
-        atten: atten::DualHMC624A<Att1Le, Att2Le, Spi>,
-    }
+    // Setup the pins
+    let pins = bsp::Pins::new(
+        pac.IO_BANK0,
+        pac.PADS_BANK0,
+        sio.gpio_bank0,
+        &mut pac.RESETS,
+    );
 
-    #[monotonic(binds = TIMER_IRQ_0, default = true)]
-    type Tonic = Monotonic<Alarm0>;
+    info!("Setting up ADC");
+    // Enable the ADC peripheral and internal temperature sensor
+    let mut adc = Adc::new(pac.ADC, &mut pac.RESETS);
+    let mut temp_sense = adc.take_temp_sensor().unwrap();
 
-    #[init]
-    fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
-        // Soft-reset does not release the hardware spinlocks
-        // Release them now to avoid a deadlock after debug or watchdog reset
-        // This is normally done in the custom #[entry]
-        // Safety: As stated in the docs, this is the first thing that will
-        // run in the entry point of the firmware
-        unsafe {
-            hal::sio::spinlock_reset();
-        }
+    // Setup RF power monitor chip
+    let mut rf1_if_pow = AdcPin::new(pins.rf1_if_pow.into_floating_input());
+    let mut rf2_if_pow = AdcPin::new(pins.rf2_if_pow.into_floating_input());
 
-        // Grab the global RESETS
-        let mut resets = cx.device.RESETS;
-
-        // Create the RTIC timer
-        let mut timer = hal::Timer::new(cx.device.TIMER, &mut resets);
-        let alarm = timer.alarm_0().unwrap();
-
-        // Setup the clocks
-        let mut watchdog = hal::Watchdog::new(cx.device.WATCHDOG);
-        let clocks = hal::clocks::init_clocks_and_plls(
-            XOSC_CRYSTAL_FREQ,
-            cx.device.XOSC,
-            cx.device.CLOCKS,
-            cx.device.PLL_SYS,
-            cx.device.PLL_USB,
-            &mut resets,
-            &mut watchdog,
-        )
-        .ok()
-        .unwrap();
-
-        // Grab the pins and set them up
-        let sio = hal::Sio::new(cx.device.SIO);
-        let pins = bsp::Pins::new(
-            cx.device.IO_BANK0,
-            cx.device.PADS_BANK0,
-            sio.gpio_bank0,
-            &mut resets,
-        );
-
-        // Enable the ADC peripheral and internal temperature sensor
-        let mut adc = Adc::new(cx.device.ADC, &mut resets);
-        let temp_sense = adc.enable_temp_sensor();
-        let rf1_if_pow: Rf1IfPow = pins.rf1_if_pow.into_mode();
-        let rf2_if_pow: Rf2IfPow = pins.rf2_if_pow.into_mode();
-
-        // Grab the UART pins and setup the peripheral (115200 baud)
-        let uart_pins: (Txd, Rxd) = (pins.txd.into_mode(), pins.rxd.into_mode());
-        let mut uart = UartPeripheral::new(cx.device.UART1, uart_pins, &mut resets)
-            .enable(UartConfig::default(), clocks.peripheral_clock.freq())
-            .unwrap();
-
-        // Enable the UART interrupt
-        uart.enable_rx_interrupt();
-
-        // Set the LNA outputs to ON by default
-        let mut lna_1: Rf1LnaEn = pins.rf1_lna_en.into_mode();
-        let mut lna_2: Rf2LnaEn = pins.rf2_lna_en.into_mode();
-        lna_1.set_high().unwrap();
-        lna_2.set_high().unwrap();
-
-        // Set the RF status LEDs to off
-        let mut rf1_status_led: Rf1StatusLed = pins.rf1_status_led.into_mode();
-        let mut rf2_status_led: Rf2StatusLed = pins.rf2_status_led.into_mode();
-        rf1_status_led.set_high().unwrap();
-        rf2_status_led.set_high().unwrap();
-
-        // Setup I2C for the TMP100 and INA3221
-        let sda: Sda = pins.sda.into_mode();
-        let scl: Scl = pins.scl.into_mode();
-        let i2c = I2C::i2c0(
-            cx.device.I2C0,
-            sda,
-            scl,
-            400.kHz(),
-            &mut resets,
-            &clocks.system_clock,
-        );
-        info!("Setting up I2C");
-        // Setup the INA3221
-        let mut ina3221 = ina3221::INA3221::new(i2c, ina3221::AddressPin::Gnd);
-        match ina3221.reset() {
-            Ok(_) => (),
-            Err(_) => error!("INA3221 failed to reset"),
-        };
-        match ina3221.set_averaging(ina3221::registers::Averages::_256) {
-            Ok(_) => (),
-            Err(_) => error!("INA3221 failed to set averages"),
-        };
-        info!("Setting up SPI");
-        // Setup the SPI pins and initial state of the latch enable pins (high)
-        // pins are implicitly used by the SPI driver
-        let _clk: Clk = pins.clk.into_mode();
-        let _mosi: Mosi = pins.mosi.into_mode();
-        let mut atten1_le: Att1Le = pins.atten1_le.into_mode();
-        atten1_le.set_low().unwrap();
-        let mut atten2_le: Att2Le = pins.atten2_le.into_mode();
-        atten2_le.set_low().unwrap();
-
-        let spi = hal::Spi::<_, _, 6>::new(cx.device.SPI0);
-        let spi: Spi = spi.init(
-            &mut resets,
+    // Grab the UART pins and setup the peripheral (115200 baud)
+    info!("Setting up UART");
+    let uart_pins: UartPins = (pins.txd.into_function(), pins.rxd.into_function());
+    let uart: Uart = UartPeripheral::new(pac.UART1, uart_pins, &mut pac.RESETS)
+        .enable(
+            UartConfig::new(115200.Hz(), DataBits::Eight, None, StopBits::One),
             clocks.peripheral_clock.freq(),
-            1.MHz(),
-            &embedded_hal::spi::MODE_0,
-        );
-
-        // And setup the two attenuators
-        let mut atten = atten::DualHMC624A::new(spi, atten1_le, atten2_le);
-        // and set the initial state to 0
-        atten.set_attenuation(0.0).unwrap();
-
-        info!("Booted!");
-
-        (
-            Shared {
-                rf1_if_pow,
-                rf2_if_pow,
-                adc,
-                state: Default::default(),
-            },
-            Local {
-                monitor_payload: Default::default(),
-                lna_1,
-                lna_2,
-                rf1_status_led,
-                rf2_status_led,
-                temp_sense,
-                uart,
-                ina3221,
-                atten,
-            },
-            init::Monotonics(Monotonic::new(timer, alarm)),
         )
-    }
+        .unwrap();
+    info!("Setting up GPIO");
+    // Set the LNA outputs to ON by default
+    let mut lna_1 = pins.rf1_lna_en.into_push_pull_output();
+    let mut lna_2 = pins.rf2_lna_en.into_push_pull_output();
+    lna_1.set_high().unwrap();
+    lna_2.set_high().unwrap();
 
-    // Idle task just updates the IF Good LEDs
-    #[idle(local = [rf1_status_led, rf2_status_led], shared = [rf1_if_pow, rf2_if_pow, adc, state])]
-    fn idle(cx: idle::Context) -> ! {
-        // Locals
-        let rf1 = cx.local.rf1_status_led;
-        let rf2 = cx.local.rf2_status_led;
-        // Shared
-        let mut rf1_if_pow = cx.shared.rf1_if_pow;
-        let mut rf2_if_pow = cx.shared.rf2_if_pow;
-        let mut adc = cx.shared.adc;
-        let mut state = cx.shared.state;
-        loop {
-            (&mut rf1_if_pow, &mut rf2_if_pow, &mut adc, &mut state).lock(
-                |rf1_if_pow, rf2_if_pow, adc, state| {
-                    if read_adc(adc, rf1_if_pow).unwrap() >= state.if_good_threshold {
-                        rf1.set_high().unwrap();
-                    } else {
-                        rf1.set_low().unwrap();
-                    }
-                    if read_adc(adc, rf2_if_pow).unwrap() >= state.if_good_threshold {
-                        rf2.set_high().unwrap();
-                    } else {
-                        rf2.set_low().unwrap();
-                    }
-                },
-            )
-        }
-    }
+    // Set the RF status LEDs to off
+    let mut rf1_status_led = pins.rf1_stat_led.into_push_pull_output();
+    let mut rf2_status_led = pins.rf2_stat_led.into_push_pull_output();
+    rf1_status_led.set_low().unwrap();
+    rf2_status_led.set_low().unwrap();
 
-    // Only one task - we're just going to react to requests for either monitor data or control
-    #[task(binds = UART1_IRQ, local = [uart, temp_sense, monitor_payload, ina3221, lna_1, lna_2, atten], shared = [rf1_if_pow, rf2_if_pow, adc, state])]
-    fn on_rx(cx: on_rx::Context) {
-        // Grab all the locals
-        let on_rx::LocalResources {
-            uart,
-            temp_sense,
-            monitor_payload,
-            ina3221,
-            lna_1,
-            lna_2,
-            atten,
-        } = cx.local;
-        // And shared
-        let on_rx::SharedResources {
-            rf1_if_pow,
-            rf2_if_pow,
-            adc,
-            mut state,
-        } = cx.shared;
+    // Setup the SPI pins and initial state of the latch enable pins (high)
+    // pins are implicitly used by the SPI driver
+    info!("Setting up SPI");
+    let mut atten1_le = pins.atten1_le.into_push_pull_output();
+    atten1_le.set_low().unwrap();
+    let mut atten2_le = pins.atten2_le.into_push_pull_output();
+    atten2_le.set_low().unwrap();
 
-        // Unsure yet how big this payload will be
-        let mut buf = [0u8; 16];
-        let bytes_read;
-        // Check to make sure the UART is readable
+    let spi = hal::Spi::<_, _, _, 6>::new(
+        pac.SPI0,
+        (pins.sdo.into_function(), pins.clk.into_function()),
+    )
+    .init(
+        &mut pac.RESETS,
+        clocks.peripheral_clock.freq(),
+        1.MHz(),
+        embedded_hal::spi::MODE_0,
+    );
+
+    // And setup the two attenuators
+    let mut atten = atten::DualHMC624A::new(spi, atten1_le, atten2_le);
+    // and set the initial state to 0
+    atten.set_attenuation(0.0).unwrap();
+
+    info!("Setting up I2C");
+    // Setup I2C for the TMP100 and INA3221
+    let i2c = I2C::i2c0(
+        pac.I2C0,
+        pins.sda.into_function(),
+        pins.scl.into_function(),
+        400.kHz(),
+        &mut pac.RESETS,
+        &clocks.system_clock,
+    );
+
+    // Setup the INA3221
+    let mut ina3221 = ina3221::INA3221::new(i2c, ina3221::AddressPin::Gnd);
+    match ina3221.reset() {
+        Ok(_) => (),
+        Err(_) => error!("INA3221 failed to reset"),
+    };
+    match ina3221.set_averaging(ina3221::registers::Averages::_256) {
+        Ok(_) => (),
+        Err(_) => error!("INA3221 failed to set averages"),
+    };
+
+    // Setup state for if good and monitor
+    let mut state = mnc::State::default();
+
+    // Setup the state for the COBS input message accumulator
+    let mut in_buf = [0u8; 256];
+    let mut out_buf = [0u8; 256];
+    let mut cobs_buf: CobsAccumulator<256> = CobsAccumulator::new();
+
+    info!("FEM Booted, starting main thread!");
+
+    loop {
+        // Update monitor payload in state
+        mnc::update_monitor_payload(
+            &mut state.last_monitor,
+            &mut adc,
+            &mut rf1_if_pow,
+            &mut rf2_if_pow,
+            &mut temp_sense,
+            &mut ina3221,
+        );
+        // If there are bytes for us, push them to the accumulator
         if uart.uart_is_readable() {
-            let res = uart.read_raw(&mut buf);
-            match res {
-                Err(_) => {
-                    error!("Error on UART read");
-                    return;
-                }
-                Ok(bytes) => {
-                    bytes_read = bytes;
+            while let Ok(n) = uart.read_raw(&mut in_buf) {
+                let buf = &in_buf[..n];
+                let mut window = buf;
+                'cobs: while !window.is_empty() {
+                    window = match cobs_buf.feed::<transport::Command>(window) {
+                        FeedResult::Consumed => break 'cobs,
+                        FeedResult::OverFull(new_wind) => new_wind,
+                        FeedResult::DeserError(new_wind) => new_wind,
+                        FeedResult::Success {
+                            data: cmd,
+                            remaining,
+                        } => {
+                            // Handle command
+                            info!("New incoming payload - {}", cmd);
+
+                            match cmd {
+                                transport::Command::Monitor => {
+                                    // Serialize the last monitor payload
+                                    let resp =
+                                        transport::Response::Monitor(state.last_monitor.clone());
+                                    info!("Sending monitor data - {}", resp);
+                                    let s = to_slice_cobs(&resp, &mut out_buf).unwrap();
+                                    uart.write_full_blocking(s);
+                                }
+                                transport::Command::Control(action) => {
+                                    // Do the control thing
+                                    match action {
+                                        transport::Action::SetIfLevel(level) => {
+                                            state.if_good_threshold = level
+                                        }
+                                        transport::Action::Lna1Power(en) => {
+                                            if en {
+                                                lna_1.set_high().unwrap();
+                                            } else {
+                                                lna_1.set_low().unwrap();
+                                            }
+                                        }
+                                        transport::Action::Lna2Power(en) => {
+                                            if en {
+                                                lna_2.set_high().unwrap();
+                                            } else {
+                                                lna_2.set_low().unwrap();
+                                            }
+                                        }
+                                        transport::Action::SetAtten(a) => {
+                                            match atten.set_attenuation(a) {
+                                                Ok(_) => (),
+                                                Err(_) => error!("Failed to set attenuation"),
+                                            }
+                                        }
+                                    }
+                                    // Then send an ack
+                                    let resp = transport::Response::Ack;
+                                    let s = to_slice_cobs(&resp, &mut out_buf).unwrap();
+                                    uart.write_full_blocking(s);
+                                }
+                            }
+                            remaining
+                        }
+                    };
                 }
             }
-        } else {
-            return;
         }
-        // Deserialize command
-        let command: transport::Command = match postcard::from_bytes(&buf[..bytes_read]) {
-            Ok(t) => t,
-            Err(_) => {
-                error!("Error deserializing incoming command payload");
-                return;
-            }
-        };
-        // Dispatch command
-        match command {
-            transport::Command::Monitor => {
-                info!("Request for monitor payload - sending");
-                // Update monitor payload and send
-                (adc, rf1_if_pow, rf2_if_pow).lock(|adc, rf1_if_pow, rf2_if_pow| {
-                    mnc::update_monitor_payload(
-                        monitor_payload,
-                        adc,
-                        rf1_if_pow,
-                        rf2_if_pow,
-                        temp_sense,
-                        ina3221,
-                    );
-                });
-                let bytes: Vec<u8, 40> = match postcard::to_vec(&monitor_payload) {
-                    Ok(v) => v,
-                    Err(_) => {
-                        error!("Error packing monitor payload");
-                        return;
-                    }
-                };
-                if uart.uart_is_writable() {
-                    uart.write_full_blocking(&bytes);
-                } else {
-                    error!("Couldn't write to UART")
-                }
-            }
-            transport::Command::Control(a) => match a {
-                transport::Action::SetIfLevel(level) => state.lock(|s| s.if_good_threshold = level),
-                transport::Action::Lna1Power(en) => {
-                    if en {
-                        lna_1.set_high().unwrap();
-                    } else {
-                        lna_1.set_low().unwrap();
-                    }
-                }
-                transport::Action::Lna2Power(en) => {
-                    if en {
-                        lna_2.set_high().unwrap();
-                    } else {
-                        lna_2.set_low().unwrap();
-                    }
-                }
-                transport::Action::SetAtten(a) => match atten.set_attenuation(a) {
-                    Ok(_) => (),
-                    Err(_) => error!("Failed to set attenuation"),
-                },
-            },
+        // Set the RF Good LEDs
+        if state.last_monitor.if1_power >= state.if_good_threshold {
+            rf1_status_led.set_high().unwrap();
+        } else {
+            rf1_status_led.set_low().unwrap();
+        }
+        if state.last_monitor.if2_power >= state.if_good_threshold {
+            rf2_status_led.set_high().unwrap();
+        } else {
+            rf2_status_led.set_low().unwrap();
         }
     }
 }

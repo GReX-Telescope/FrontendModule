@@ -3,6 +3,7 @@
 use cortex_m::asm::delay;
 use embedded_hal::blocking::spi::Write;
 use embedded_hal::digital::v2::OutputPin;
+#[allow(unused_imports)]
 use micromath::F32Ext;
 
 #[derive(Debug)]

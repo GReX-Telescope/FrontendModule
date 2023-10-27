@@ -1,9 +1,6 @@
-use crate::{
-    bsp::{read_temp, Rf1IfPow, Rf2IfPow},
-    log_det::read_power,
-};
+use crate::{bsp::read_temp, log_det::read_power};
 use defmt::error;
-use embedded_hal::blocking::i2c;
+use embedded_hal::{adc::Channel, blocking::i2c};
 use ina3221::INA3221;
 use rp2040_hal::{adc::TempSense, Adc};
 use transport::MonitorPayload;
@@ -11,12 +8,14 @@ use transport::MonitorPayload;
 #[derive(Debug)]
 pub struct State {
     pub if_good_threshold: f32,
+    pub last_monitor: MonitorPayload,
 }
 
 impl Default for State {
     fn default() -> Self {
         Self {
             if_good_threshold: -10.0,
+            last_monitor: MonitorPayload::default(),
         }
     }
 }
@@ -47,15 +46,17 @@ where
     }
 }
 
-pub fn update_monitor_payload<I2C, E>(
+pub fn update_monitor_payload<I2C, E, PIN1, PIN2>(
     payload: &mut MonitorPayload,
     adc: &mut Adc,
-    rf1_if_pow: &mut Rf1IfPow,
-    rf2_if_pow: &mut Rf2IfPow,
+    rf1_if_pow: &mut PIN1,
+    rf2_if_pow: &mut PIN2,
     internal_temp: &mut TempSense,
     ina3221: &mut INA3221<I2C>,
 ) where
     I2C: i2c::Read<Error = E> + i2c::Write<Error = E> + i2c::WriteRead<Error = E>,
+    PIN1: Channel<Adc, ID = u8>,
+    PIN2: Channel<Adc, ID = u8>,
 {
     // Update IF Powers
     payload.if1_power = read_power(adc, rf1_if_pow).unwrap();
