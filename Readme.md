@@ -1,7 +1,5 @@
 # GReX Frontend Module
 
-## Firmware
-
 You'll need:
 - [Rust](https://rustup.rs/)
 - ARM Rust toolchain
@@ -16,3 +14,31 @@ You'll need:
 ## Hardware
 
 For assembly, access the interactive BOM [here](https://grex-telescope.github.io/FrontendModule/hardware/bom/ibom.html)
+
+## Software
+
+### Building
+
+Build for the current architecture
+
+`just build-cli`
+
+### For the RPi in the box
+
+`just build-cli-pi`
+
+The resulting binary is in `target/armv7-unknown-linux-musleabihf/release/cli` which you can copy to the Pi, `chmod +x` if you need, and run.
+
+## Firmware
+
+### Building
+
+`just build-firmware`
+
+The resulting binary (elf) is in target/thumbv6m-none-eabi/release/firmware
+
+### Flashing
+
+Using a JLink in CMSIS-DAP mode
+
+`just flash-firmware`

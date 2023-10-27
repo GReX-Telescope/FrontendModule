@@ -9,9 +9,10 @@ pub const XOSC_CRYSTAL_FREQ: u32 = 12_000_000;
 pub const ADC_REF_VOLT: f32 = 3.3;
 
 // Don't forget the second stage bootloader
-#[link_section = ".boot_loader"]
+#[link_section = ".boot2"]
+#[no_mangle]
 #[used]
-pub static BOOT_LOADER: [u8; 256] = rp2040_boot2::BOOT_LOADER_IS25LP080;
+pub static BOOT2_FIRMWARE: [u8; 256] = rp2040_boot2::BOOT_LOADER_IS25LP080;
 
 // And add all of our pins!
 hal::bsp_pins!(
