@@ -31,8 +31,13 @@ jobs:
             run: cargo build --release --bin firmware --target thumbv6m-none-eabi
           - name: Convert to hex
             run: cargo objcopy --bin firmware --target thumbv6m-none-eabi --release -- -O ihex firmware.hex
+          - name: Convert to bin
+            run: cargo objcopy --bin firmware --target thumbv6m-none-eabi --release -- -O binary firmware.bin
           - name: Publish release artifacts
             uses: actions/upload-artifact@v3
             with:
               name: firmware
-              path: "target/thumbv6m-none-eabi/release/firmware"
+              path: |
+                target/thumbv6m-none-eabi/release/firmware
+                firmware.hex
+                firmware.bin
