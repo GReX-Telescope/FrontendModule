@@ -1,0 +1,67 @@
+name: Build release for MC CLI tool
+
+on:
+  push:
+    branches:
+      - "**"
+
+jobs:
+    release:
+      name: Release - ${{ matrix.platform.release_for }}
+      strategy:
+        matrix:
+          platform:
+            - release_for: Linux-x86_64
+              os: ubuntu-20.04
+              target: x86_64-unknown-linux-gnu
+              bin: cli
+              name: mnc-cli-FreeBSD-x86_64.tar.gz
+  
+            - release_for: Windows-x86_64
+              os: windows-latest
+              target: x86_64-pc-windows-msvc
+              bin: cli.exe
+              name: mnc-cli-Windows-x86_64.zip
+  
+            - release_for: macOS-x86_64
+              os: macOS-latest
+              target: x86_64-apple-darwin
+              bin: cli
+              name: mnc-cli-Darwin-x86_64.tar.gz
+
+            - release_for: Linux-armv7
+              os: ubuntu-20.04
+              target: armv7-unknown-linux-musleabihf
+              bin: cli
+              name: mnc-cli-Linux-armv7-musl.tar.gz
+  
+      runs-on: ${{ matrix.platform.os }}
+      steps:
+        - name: Checkout
+          uses: actions/checkout@v3
+        - name: Build binary
+          uses: houseabsolute/actions-rust-cross@v0
+          with:
+            command: ${{ matrix.platform.command }}
+            target: ${{ matrix.platform.target }}
+            args: "--locked --release"
+            strip: true
+        - name: Package as archive
+          shell: bash
+          run: |
+            cd target/${{ matrix.platform.target }}/release
+            if [[ "${{ matrix.platform.os }}" == "windows-latest" ]]; then
+              7z a ../../../${{ matrix.platform.name }} ${{ matrix.platform.bin }}
+            else
+              tar czvf ../../../${{ matrix.platform.name }} ${{ matrix.platform.bin }}
+            fi
+            cd -
+        - name: Publish release artifacts
+          uses: actions/upload-artifact@v3
+          with:
+            name: cli-${{ matrix.platform.os_name }}
+            path: "mnc-cli-*"
+        - name: Publish GitHub release
+          uses: softprops/action-gh-release@v1
+          with:
+            files: "mnc-cli-*"
