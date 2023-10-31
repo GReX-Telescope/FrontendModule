@@ -46,7 +46,7 @@ jobs:
           with:
             command: ${{ matrix.platform.command }}
             target: ${{ matrix.platform.target }}
-            args: "--release"
+            args: "--release --bin cli"
             strip: true
         - name: Package as archive
           shell: bash
