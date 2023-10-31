@@ -5,6 +5,10 @@ on:
     branches:
       - "**"
 
+env:
+  GITHUB_TOKEN: ${{ github.token }}
+  RUST_BACKTRACE: 1
+
 jobs:
     release:
       name: Release - ${{ matrix.platform.release_for }}
