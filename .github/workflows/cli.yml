@@ -16,24 +16,28 @@ jobs:
               target: x86_64-unknown-linux-gnu
               bin: cli
               name: mnc-cli-FreeBSD-x86_64.tar.gz
+              command: build
   
             - release_for: Windows-x86_64
               os: windows-latest
               target: x86_64-pc-windows-msvc
               bin: cli.exe
               name: mnc-cli-Windows-x86_64.zip
+              command: build
   
             - release_for: macOS-x86_64
               os: macOS-latest
               target: x86_64-apple-darwin
               bin: cli
               name: mnc-cli-Darwin-x86_64.tar.gz
+              command: build
 
             - release_for: Linux-armv7
               os: ubuntu-20.04
               target: armv7-unknown-linux-musleabihf
               bin: cli
               name: mnc-cli-Linux-armv7-musl.tar.gz
+              command: build
   
       runs-on: ${{ matrix.platform.os }}
       steps:
@@ -66,6 +70,10 @@ jobs:
           with:
             name: cli-${{ matrix.platform.os_name }}
             path: "mnc-cli-*"
+        - name: Configure Git
+          run: |
+            git config --global user.email "me@kiranshila.com"
+            git config --global user.name "Kiran Shila"
         - name: Tag the repository
           id: tag
           run: |
