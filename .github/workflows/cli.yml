@@ -19,7 +19,7 @@ jobs:
               os: ubuntu-20.04
               target: x86_64-unknown-linux-gnu
               bin: cli
-              name: mnc-cli-FreeBSD-x86_64.tar.gz
+              name: mnc-cli-Linux-x86_64.tar.gz
               command: build
   
             - release_for: Windows-x86_64
