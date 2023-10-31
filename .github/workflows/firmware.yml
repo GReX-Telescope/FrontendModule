@@ -19,14 +19,19 @@ jobs:
             with:
                targets: thumbv6m-none-eabi
                components: llvm-tools-preview
-          - name: Build firmware
-            run: cargo build --release --bin firmware --target thumbv6m-none-eabi
           - name: Install binutils
             uses: baptiste0928/cargo-install@v2
             with:
-                crate: cargo-binutils
+              crate: cargo-binutils
+          - name: Install flip-link
+            uses: baptiste0928/cargo-install@v2
+            with:
+              crate: cargo-flip-link
+          - name: Build firmware
+            run: cargo build --release --bin firmware --target thumbv6m-none-eabi
+
           - name: Convert to hex
-            run: cargo objcopy --bin firmware --release -- -O ihex firmware.hex
+            run: cargo objcopy --bin firmware --target thumbv6m-none-eabi --release -- -O ihex firmware.hex
           - name: Publish release artifacts
             uses: actions/upload-artifact@v3
             with:
