@@ -72,7 +72,7 @@ jobs:
         - name: Publish release artifacts
           uses: actions/upload-artifact@v3
           with:
-            name: cli-${{ matrix.platform.os_name }}
+            name: cli-${{ matrix.platform.release_for }}
             path: "mnc-cli-*"
         - name: Publish GitHub release
           uses: softprops/action-gh-release@v1
