@@ -39,12 +39,16 @@ jobs:
       steps:
         - name: Checkout
           uses: actions/checkout@v3
+        - name: Cache cargo & target directories
+          uses: Swatinem/rust-cache@v2
+        - name: Install musl-tools on Linux
+          run: sudo apt-get update --yes && sudo apt-get install --yes musl-tools
         - name: Build binary
           uses: houseabsolute/actions-rust-cross@v0
           with:
             command: ${{ matrix.platform.command }}
             target: ${{ matrix.platform.target }}
-            args: "--locked --release"
+            args: "--release"
             strip: true
         - name: Package as archive
           shell: bash
